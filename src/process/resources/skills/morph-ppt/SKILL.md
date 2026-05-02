@@ -151,6 +151,8 @@ officecli add "$FILE" "/slide[3]" --type shape --prop 'name=!!actor-metric' \
 
 ## Morph Pair Planning (pre-code, REQUIRED)
 
+Before planning morph pairs, if the deck's audience / purpose / narrative is underspecified, run the planning prompt in `reference/decision-rules.md` to emit a `brief.md` first — a morph arc without a narrative spine collapses into "slide with motion", not "story with motion".
+
 Plan every transition in a table inside `brief.md` **before** writing any `officecli add`. Renaming shapes mid-build is the #1 cause of ghost accumulation bugs.
 
 | Pair | Slide A (start)                                  | Slide B (end)                                                | Actors in play                                          | Ghost on Slide B                                                                   |

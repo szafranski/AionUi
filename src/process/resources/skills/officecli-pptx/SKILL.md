@@ -101,6 +101,15 @@ Before declaring done, the per-slide render (see QA) MUST satisfy:
 
 If any fails, STOP and fix before declaring done.
 
+### Hard rules — typography / contrast / notes / KPI fit
+
+These four fire on live-room failure modes that the Requirements table alone has not stopped in practice. Each is principle + exception + why.
+
+- **Body floors at 18pt** (absolute floor 16pt for tiny sublabels; 18pt is the working floor for all paragraph and card body text per the Requirements table). Exceptions are non-primary-read elements only: chart axis labels, legends, footer / page number, and KPI sublabels of ≤ 5 words (e.g. "Active users", "MoM growth"). Full descriptive sentences never qualify — shrink the sentence or split the slide, do not shrink the font. "The cards won't fit" is never a reason to drop below floor; it is a reason to drop cards.
+- **Dark backgrounds force near-white body.** When fill brightness < 30% (`1E2761`, `36454F`, `000000`, deep forest / berry / cherry), every run of body text, card body, chart series fill, and icon color must be `FFFFFF` or brightness > 80%. Mid-gray (`6B7B8D` ≈ 44%) reads fine on a laptop screen and disappears under projector glare. Check with `view html` after the dark-fill pass.
+- **Content slides carry speaker notes.** Every slide that is neither cover nor closing must have `--type notes --prop text="..."`. The speaker needs a script; the audience should not read the slide verbatim. Missing notes on a content slide is not shippable.
+- **KPI text fits the card — pre-compute, don't eyeball.** In a 7cm-wide card at 60pt Georgia bold, values with `$` and `.` (wide glyphs) wrap at 4 characters. `$9.4M` breaks the card; use `$9M` + "USD millions" sublabel, or move to the 3-card 9.78cm layout. Upper bound: `max_size_pt ≈ card_width_cm × denom`, where denom = 10 for 1–2 chars, 7 for 3–4 chars, 5 for 5+ chars.
+
 ### Hard rules worth repeating
 
 - **`layout=blank` is the default for custom designs.** Titles become plain `shape` elements, not placeholders. `view outline` / `view issues` reporting `(untitled)` / `Slide has no title` is **expected**, not a defect. Use `layout=title` + `placeholder[title]` only when screen-reader outline compatibility matters.
@@ -128,18 +137,43 @@ Standard widescreen is **33.87 × 19.05cm**. Treat it as a 12-column grid intern
 
 → See Requirements table above. Non-negotiable floors.
 
+### Font pairings
+
+Two fonts max — one for headings, one for body. Pair by document register, not by novelty. "Best For" is a prompt, not a decree; if the topic matches a row, use it as the default and move on.
+
+| Header       | Body          | Best For                                    |
+| ------------ | ------------- | ------------------------------------------- |
+| Georgia      | Calibri       | Formal business, finance, executive reports |
+| Arial Black  | Arial         | Bold marketing, product launches            |
+| Calibri      | Calibri Light | Clean corporate, minimal design             |
+| Cambria      | Calibri       | Traditional professional, legal, academic   |
+| Trebuchet MS | Calibri       | Friendly tech, startups, SaaS               |
+| Impact       | Arial         | Bold headlines, event decks, keynotes       |
+| Palatino     | Garamond      | Elegant editorial, luxury, nonprofit        |
+| Consolas     | Calibri       | Developer tools, technical / engineering    |
+
+Set both fonts explicitly on every shape (`--prop font=Georgia` on title shapes, `--prop font=Calibri` on body shapes) — theme-default inheritance drifts between masters. `officecli help pptx shape` shows the `font` prop.
+
 ### Color and contrast
 
-One dominant color does 60–70% of visual weight, two supporting tones, one accent used sparingly. Never use 4+ colors in body content.
+One dominant color does 60–70% of visual weight, two supporting tones, one accent used sparingly. Never use 4+ colors in body content. Columns are: **Primary** (dominant — the one color you see first), **Secondary** (the supporting tone), **Accent** (sparing, one-hit emphasis), **Text** (body on light fills), **Muted** (captions / axis labels / footer).
 
-| Theme            | Dominant | Supporting | Accent   | Dark body |
-| ---------------- | -------- | ---------- | -------- | --------- |
-| Executive navy   | `1E2761` | `CADCFC`   | `FFFFFF` | `333333`  |
-| Forest & moss    | `2C5F2D` | `97BC62`   | `F5F5F5` | `2D2D2D`  |
-| Warm terracotta  | `B85042` | `E7E8D1`   | `A7BEAE` | `3D2B2B`  |
-| Charcoal minimal | `36454F` | `F2F2F2`   | `212121` | `333333`  |
+| Theme              | Primary  | Secondary | Accent   | Text     | Muted    |
+| ------------------ | -------- | --------- | -------- | -------- | -------- |
+| Coral Energy       | `F96167` | `F9E795`  | `2F3C7E` | `333333` | `8B7E6A` |
+| Midnight Executive | `1E2761` | `CADCFC`  | `FFFFFF` | `333333` | `8899BB` |
+| Forest & Moss      | `2C5F2D` | `97BC62`  | `F5F5F5` | `2D2D2D` | `6B8E6B` |
+| Charcoal Minimal   | `36454F` | `F2F2F2`  | `212121` | `333333` | `7A8A94` |
+| Warm Terracotta    | `B85042` | `E7E8D1`  | `A7BEAE` | `3D2B2B` | `8C7B75` |
+| Berry & Cream      | `6D2E46` | `A26769`  | `ECE2D0` | `3D2233` | `8C6B7A` |
+| Ocean Gradient     | `065A82` | `1C7293`  | `21295C` | `2B3A4E` | `6B8FAA` |
+| Teal Trust         | `028090` | `00A896`  | `02C39A` | `2D3B3B` | `5E8C8C` |
+| Sage Calm          | `84B59F` | `69A297`  | `50808E` | `2D3D35` | `7A9488` |
+| Cherry Bold        | `990011` | `FCF6F5`  | `2F3C7E` | `333333` | `8B6B6B` |
 
-On dark backgrounds (fill brightness < 30%), text and chart series MUST be white or > 80%-bright. Mid-gray is invisible on projection.
+Pick by topic, not by default — finance reads Midnight Executive, a product launch reads Coral Energy, safety / LOTO reads Cherry Bold. If the closest named theme is not quite right, blend (e.g. Forest primary + gold `D4A843` accent). Use **Text** on light fills, **Muted** for captions / axis / footer, `FFFFFF` or Secondary for body on dark fills.
+
+On dark backgrounds (fill brightness < 30%), text and chart series MUST be white or > 80%-bright. Mid-gray is invisible on projection — see Hard rules above.
 
 ### Chart-choice decision table
 

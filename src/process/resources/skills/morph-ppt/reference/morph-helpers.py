@@ -69,8 +69,8 @@ def _collect_shapes(children, callback):
     """Walk a shape tree depth-first, calling callback(child) for each node."""
     for child in children:
         callback(child)
-        if "Children" in child:
-            _collect_shapes(child["Children"], callback)
+        if "children" in child:
+            _collect_shapes(child["children"], callback)
 
 
 # ---------------------------------------------------------------------------
@@ -149,14 +149,14 @@ def _check_unghosted(data, prev_slide):
     unghosted = []
 
     def visit(child):
-        name = child.get("Format", {}).get("name", "")
-        x    = child.get("Format", {}).get("x", "")
-        path = child.get("Path", "")
+        name = child.get("format", {}).get("name", "")
+        x    = child.get("format", {}).get("x", "")
+        path = child.get("path", "")
         if f"#s{prev_slide}-" in name and x != "36cm":
             unghosted.append(f"{path}: name={name}, x={x}")
 
-    if "Children" in data:
-        _collect_shapes(data["Children"], visit)
+    if "children" in data:
+        _collect_shapes(data["children"], visit)
     return unghosted
 
 
@@ -169,13 +169,13 @@ def _check_duplicates(prev_data, curr_data):
         boxes = []
 
         def visit(child):
-            if child.get("Type") != "textbox":
+            if child.get("type") != "textbox":
                 return
-            name = child.get("Format", {}).get("name", "")
-            text = child.get("Text", "").strip()
-            x    = child.get("Format", {}).get("x", "")
-            y    = child.get("Format", {}).get("y", "")
-            path = child.get("Path", "")
+            name = child.get("format", {}).get("name", "")
+            text = child.get("text", "").strip()
+            x    = child.get("format", {}).get("x", "")
+            y    = child.get("format", {}).get("y", "")
+            path = child.get("path", "")
 
             if not text or len(text) < 6:
                 return
@@ -187,8 +187,8 @@ def _check_duplicates(prev_data, curr_data):
             if has_slide_pattern or not is_scene:
                 boxes.append({"path": path, "text": text[:50], "x": x, "y": y})
 
-        if "Children" in data:
-            _collect_shapes(data["Children"], visit)
+        if "children" in data:
+            _collect_shapes(data["children"], visit)
         return boxes
 
     prev_boxes = extract(prev_data)
@@ -253,8 +253,9 @@ def morph_verify_slide(deck, slide):
                 has_error = True
             else:
                 print(f"{GREEN}  No unghosted content detected{NC}")
-        except Exception:
-            print(f"{GREEN}  No unghosted content detected{NC}")
+        except Exception as e:
+            print(f"{RED}  [helper] unghosted-check parse error: {e}{NC}", file=sys.stderr)
+            has_error = True
 
         # Method 2: duplicate text/position detection (backup for missing # prefix)
         try:
@@ -272,8 +273,9 @@ def morph_verify_slide(deck, slide):
                 print(f"{YELLOW}     2. Forgot to ghost previous slide's content{NC}")
                 print(f"{YELLOW}     3. Forgot to add new content for this slide{NC}")
                 has_error = True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"{RED}  [helper] duplicate-check parse error: {e}{NC}", file=sys.stderr)
+            has_error = True
 
     if not has_error:
         print(f"{GREEN}Slide {slide} verification passed{NC}")
