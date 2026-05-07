@@ -6,7 +6,7 @@
  *
  * Output: resources/bundled-aionui-backend/{platform}-{arch}/aionui-backend[.exe]
  *
- * Pattern follows prepareAionrs.js.
+ * Pattern follows the other bundled binary preparation scripts.
  */
 
 const { execSync, execFileSync } = require('child_process');
