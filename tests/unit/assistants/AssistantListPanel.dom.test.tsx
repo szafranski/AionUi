@@ -26,14 +26,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('./AssistantAvatar', () => ({
-  default: ({ assistant }: any) => <div data-testid="avatar">{assistant.name}</div>,
+  default: ({ assistant }: any) => <div data-testid='avatar'>{assistant.name}</div>,
 }));
 
 import AssistantListPanel from '@/renderer/pages/settings/AssistantSettings/AssistantListPanel';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(<ConfigProvider>{ui}</ConfigProvider>);
+const renderWithProviders = (ui: React.ReactElement) => render(<ConfigProvider>{ui}</ConfigProvider>);
 
 describe('AssistantListPanel', () => {
   const mockAssistants: AssistantListItem[] = [

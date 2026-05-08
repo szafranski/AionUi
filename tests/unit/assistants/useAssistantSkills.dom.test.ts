@@ -60,10 +60,7 @@ describe('useAssistantSkills', () => {
     ];
     (ipcBridge.fs.detectAndCountExternalSkills.invoke as any).mockResolvedValue(mockSources);
 
-    const { result, rerender } = renderHook(
-      (props) => useAssistantSkills(props),
-      { initialProps: defaultParams }
-    );
+    const { result, rerender } = renderHook((props) => useAssistantSkills(props), { initialProps: defaultParams });
 
     // Open modal
     rerender({ ...defaultParams, skillsModalVisible: true });
@@ -76,10 +73,7 @@ describe('useAssistantSkills', () => {
   it('handles empty external skills response', async () => {
     (ipcBridge.fs.detectAndCountExternalSkills.invoke as any).mockResolvedValue([]);
 
-    const { result, rerender } = renderHook(
-      (props) => useAssistantSkills(props),
-      { initialProps: defaultParams }
-    );
+    const { result, rerender } = renderHook((props) => useAssistantSkills(props), { initialProps: defaultParams });
 
     rerender({ ...defaultParams, skillsModalVisible: true });
 
@@ -92,10 +86,7 @@ describe('useAssistantSkills', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (ipcBridge.fs.detectAndCountExternalSkills.invoke as any).mockRejectedValue(new Error('Detection failed'));
 
-    const { result, rerender } = renderHook(
-      (props) => useAssistantSkills(props),
-      { initialProps: defaultParams }
-    );
+    const { result, rerender } = renderHook((props) => useAssistantSkills(props), { initialProps: defaultParams });
 
     rerender({ ...defaultParams, skillsModalVisible: true });
 
@@ -121,10 +112,12 @@ describe('useAssistantSkills', () => {
       await result.current.handleAddCustomPath();
     });
 
-    await waitFor(() => expect(ipcBridge.fs.addCustomExternalPath.invoke).toHaveBeenCalledWith({
-      name: 'MyPath',
-      path: '/path/to/skills',
-    }));
+    await waitFor(() =>
+      expect(ipcBridge.fs.addCustomExternalPath.invoke).toHaveBeenCalledWith({
+        name: 'MyPath',
+        path: '/path/to/skills',
+      })
+    );
     expect(mockMessage.success).toHaveBeenCalled();
     expect(result.current.showAddPathModal).toBe(false);
   });

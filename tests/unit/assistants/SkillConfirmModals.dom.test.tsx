@@ -56,12 +56,16 @@ describe('SkillConfirmModals', () => {
   });
 
   it('renders without crashing when deletePendingSkillName is set (smoke)', () => {
-    const { container } = renderWithProviders(<SkillConfirmModals {...defaultProps} deletePendingSkillName='skill-x' />);
+    const { container } = renderWithProviders(
+      <SkillConfirmModals {...defaultProps} deletePendingSkillName='skill-x' />
+    );
     expect(container).toBeTruthy();
   });
 
   it('renders without crashing when deleteCustomSkillName is set (smoke)', () => {
-    const { container } = renderWithProviders(<SkillConfirmModals {...defaultProps} deleteCustomSkillName='custom-skill' />);
+    const { container } = renderWithProviders(
+      <SkillConfirmModals {...defaultProps} deleteCustomSkillName='custom-skill' />
+    );
     expect(container).toBeTruthy();
   });
 
@@ -72,19 +76,29 @@ describe('SkillConfirmModals', () => {
 
   it('setPendingSkills is callable (callback spy)', () => {
     const setPendingSpy = vi.fn();
-    renderWithProviders(<SkillConfirmModals {...defaultProps} deletePendingSkillName='skill-x' setPendingSkills={setPendingSpy} />);
+    renderWithProviders(
+      <SkillConfirmModals {...defaultProps} deletePendingSkillName='skill-x' setPendingSkills={setPendingSpy} />
+    );
     expect(setPendingSpy).not.toHaveBeenCalled(); // Not auto-triggered
   });
 
   it('setCustomSkills is callable (callback spy)', () => {
     const setCustomSpy = vi.fn();
-    renderWithProviders(<SkillConfirmModals {...defaultProps} deleteCustomSkillName='custom-skill' setCustomSkills={setCustomSpy} />);
+    renderWithProviders(
+      <SkillConfirmModals {...defaultProps} deleteCustomSkillName='custom-skill' setCustomSkills={setCustomSpy} />
+    );
     expect(setCustomSpy).not.toHaveBeenCalled(); // Not auto-triggered
   });
 
   it('setDeletePendingSkillName is callable (callback spy)', () => {
     const setDeletePendingSpy = vi.fn();
-    renderWithProviders(<SkillConfirmModals {...defaultProps} deletePendingSkillName='skill-x' setDeletePendingSkillName={setDeletePendingSpy} />);
+    renderWithProviders(
+      <SkillConfirmModals
+        {...defaultProps}
+        deletePendingSkillName='skill-x'
+        setDeletePendingSkillName={setDeletePendingSpy}
+      />
+    );
     expect(setDeletePendingSpy).not.toHaveBeenCalled(); // Not auto-triggered
   });
 });

@@ -20,8 +20,7 @@ vi.mock('react-i18next', () => ({
 import DeleteAssistantModal from '@/renderer/pages/settings/AssistantSettings/DeleteAssistantModal';
 import type { AssistantListItem } from '@/renderer/pages/settings/AssistantSettings/types';
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(<ConfigProvider>{ui}</ConfigProvider>);
+const renderWithProviders = (ui: React.ReactElement) => render(<ConfigProvider>{ui}</ConfigProvider>);
 
 describe('DeleteAssistantModal', () => {
   const defaultProps = {
@@ -52,7 +51,13 @@ describe('DeleteAssistantModal', () => {
   });
 
   it('displays assistant name in confirmation (props branch)', () => {
-    const assistant: AssistantListItem = { id: 'a1', name: 'UserAssistant', sort_order: 1, source: 'user', enabled: true };
+    const assistant: AssistantListItem = {
+      id: 'a1',
+      name: 'UserAssistant',
+      sort_order: 1,
+      source: 'user',
+      enabled: true,
+    };
     renderWithProviders(<DeleteAssistantModal {...defaultProps} visible={true} activeAssistant={assistant} />);
     expect(screen.getByText('UserAssistant')).toBeInTheDocument();
   });
@@ -61,7 +66,9 @@ describe('DeleteAssistantModal', () => {
     const onConfirmSpy = vi.fn();
     const assistant: AssistantListItem = { id: 'a1', name: 'Test', sort_order: 1, source: 'user', enabled: true };
     const user = userEvent.setup();
-    renderWithProviders(<DeleteAssistantModal {...defaultProps} visible={true} activeAssistant={assistant} onConfirm={onConfirmSpy} />);
+    renderWithProviders(
+      <DeleteAssistantModal {...defaultProps} visible={true} activeAssistant={assistant} onConfirm={onConfirmSpy} />
+    );
 
     const okButton = screen.getByRole('button', { name: /delete/i });
     await user.click(okButton);
@@ -73,7 +80,9 @@ describe('DeleteAssistantModal', () => {
     const onCancelSpy = vi.fn();
     const assistant: AssistantListItem = { id: 'a1', name: 'Test', sort_order: 1, source: 'user', enabled: true };
     const user = userEvent.setup();
-    renderWithProviders(<DeleteAssistantModal {...defaultProps} visible={true} activeAssistant={assistant} onCancel={onCancelSpy} />);
+    renderWithProviders(
+      <DeleteAssistantModal {...defaultProps} visible={true} activeAssistant={assistant} onCancel={onCancelSpy} />
+    );
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);

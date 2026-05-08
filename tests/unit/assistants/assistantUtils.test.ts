@@ -82,7 +82,7 @@ describe('assistantUtils', () => {
         { id: 'c', name: 'C', sort_order: 2, source: 'user', enabled: true },
       ];
       const sorted = sortAssistants(list);
-      expect(sorted.map(a => a.id)).toEqual(['b', 'c', 'a']);
+      expect(sorted.map((a) => a.id)).toEqual(['b', 'c', 'a']);
     });
 
     it('returns empty array for empty input', () => {
@@ -105,7 +105,7 @@ describe('assistantUtils', () => {
         { id: 'b', name: 'B', sort_order: 1, source: 'user', enabled: true },
       ];
       const sorted = sortAssistants(list);
-      expect(sorted.map(a => a.id)).toEqual(['a', 'b']); // stable: input order preserved
+      expect(sorted.map((a) => a.id)).toEqual(['a', 'b']); // stable: input order preserved
     });
   });
 
@@ -133,8 +133,8 @@ describe('assistantUtils', () => {
     });
 
     it('filters by search query (case-insensitive)', () => {
-      expect(filterAssistants(assistants, 'claude', 'all', 'en').map(a => a.id)).toEqual(['1']);
-      expect(filterAssistants(assistants, 'ASSISTANT', 'all', 'en').map(a => a.id)).toEqual(['1', '3']);
+      expect(filterAssistants(assistants, 'claude', 'all', 'en').map((a) => a.id)).toEqual(['1']);
+      expect(filterAssistants(assistants, 'ASSISTANT', 'all', 'en').map((a) => a.id)).toEqual(['1', '3']);
     });
 
     it('combines query and filter', () => {
@@ -168,14 +168,12 @@ describe('assistantUtils', () => {
         { id: '3', name: 'C', sort_order: 3, source: 'user', enabled: true },
       ];
       const { enabledAssistants, disabledAssistants } = groupAssistantsByEnabled(list);
-      expect(enabledAssistants.map(a => a.id)).toEqual(['1', '3']);
-      expect(disabledAssistants.map(a => a.id)).toEqual(['2']);
+      expect(enabledAssistants.map((a) => a.id)).toEqual(['1', '3']);
+      expect(disabledAssistants.map((a) => a.id)).toEqual(['2']);
     });
 
     it('handles all enabled assistants', () => {
-      const list: AssistantListItem[] = [
-        { id: '1', name: 'A', sort_order: 1, source: 'user', enabled: true },
-      ];
+      const list: AssistantListItem[] = [{ id: '1', name: 'A', sort_order: 1, source: 'user', enabled: true }];
       const { enabledAssistants, disabledAssistants } = groupAssistantsByEnabled(list);
       expect(enabledAssistants).toHaveLength(1);
       expect(disabledAssistants).toHaveLength(0);

@@ -23,8 +23,7 @@ vi.mock('@/renderer/hooks/context/LayoutContext', () => ({
 
 import AssistantEditDrawer from '@/renderer/pages/settings/AssistantSettings/AssistantEditDrawer';
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(<ConfigProvider>{ui}</ConfigProvider>);
+const renderWithProviders = (ui: React.ReactElement) => render(<ConfigProvider>{ui}</ConfigProvider>);
 
 describe('AssistantEditDrawer', () => {
   const defaultProps = {
@@ -82,7 +81,7 @@ describe('AssistantEditDrawer', () => {
   });
 
   it('passes editName prop correctly (props branch)', () => {
-    renderWithProviders(<AssistantEditDrawer {...defaultProps} editVisible={true} editName="TestName" />);
+    renderWithProviders(<AssistantEditDrawer {...defaultProps} editVisible={true} editName='TestName' />);
     const nameInput = screen.queryByDisplayValue('TestName');
     expect(nameInput || container).toBeTruthy(); // Shallow: just verify no crash
   });
@@ -95,12 +94,16 @@ describe('AssistantEditDrawer', () => {
 
   it('setEditVisible is callable (callback spy)', () => {
     const setEditVisibleSpy = vi.fn();
-    renderWithProviders(<AssistantEditDrawer {...defaultProps} editVisible={true} setEditVisible={setEditVisibleSpy} />);
+    renderWithProviders(
+      <AssistantEditDrawer {...defaultProps} editVisible={true} setEditVisible={setEditVisibleSpy} />
+    );
     expect(setEditVisibleSpy).not.toHaveBeenCalled(); // Not auto-triggered
   });
 
   it('renders with isCreating=true (props branch)', () => {
-    const { container } = renderWithProviders(<AssistantEditDrawer {...defaultProps} editVisible={true} isCreating={true} />);
+    const { container } = renderWithProviders(
+      <AssistantEditDrawer {...defaultProps} editVisible={true} isCreating={true} />
+    );
     expect(container).toBeTruthy();
   });
 });

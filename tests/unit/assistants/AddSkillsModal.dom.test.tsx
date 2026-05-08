@@ -19,8 +19,7 @@ vi.mock('react-i18next', () => ({
 
 import AddSkillsModal from '@/renderer/pages/settings/AssistantSettings/AddSkillsModal';
 
-const renderWithProviders = (ui: React.ReactElement) =>
-  render(<ConfigProvider>{ui}</ConfigProvider>);
+const renderWithProviders = (ui: React.ReactElement) => render(<ConfigProvider>{ui}</ConfigProvider>);
 
 describe('AddSkillsModal', () => {
   const mockSkills = [
@@ -65,7 +64,9 @@ describe('AddSkillsModal', () => {
   });
 
   it('renders with empty filteredExternalSkills (props branch)', () => {
-    const { container } = renderWithProviders(<AddSkillsModal {...defaultProps} visible={true} filteredExternalSkills={[]} />);
+    const { container } = renderWithProviders(
+      <AddSkillsModal {...defaultProps} visible={true} filteredExternalSkills={[]} />
+    );
     expect(container).toBeTruthy();
   });
 
@@ -82,7 +83,9 @@ describe('AddSkillsModal', () => {
   });
 
   it('renders with externalSkillsLoading=true (props branch)', () => {
-    const { container } = renderWithProviders(<AddSkillsModal {...defaultProps} visible={true} externalSkillsLoading={true} />);
+    const { container } = renderWithProviders(
+      <AddSkillsModal {...defaultProps} visible={true} externalSkillsLoading={true} />
+    );
     expect(container).toBeTruthy();
   });
 });
