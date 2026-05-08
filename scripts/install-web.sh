@@ -13,7 +13,11 @@
 set -euo pipefail
 
 # ─── Default Configuration ──────────────────────────────────────────────────
-VERSION="${VERSION:-__VERSION__}"  # CI will replace __VERSION__ with actual version
+VERSION="${VERSION:-__VERSION__}"
+# Note: CI runs `sed "s/__VERSION__/<ver>/g"` on this file, replacing both
+# occurrences above into e.g. "1.9.19". The resolve_version() function uses a
+# regex-based check (looks for letters) to detect the unreplaced placeholder,
+# so never add a literal "__VERSION__" string to any comparison below.
 INSTALL_DIR="${INSTALL_DIR:-${HOME}/.local/share/aionui-web}"
 BIN_DIR="${BIN_DIR:-${HOME}/.local/bin}"
 MIRROR="${MIRROR:-https://github.com/iOfficeAI/AionUi/releases/download}"
@@ -155,8 +159,15 @@ detect_platform_arch() {
 }
 
 resolve_version() {
-    # If VERSION is __VERSION__ (CI placeholder) or latest, query GitHub API
-    if [[ "$VERSION" == "__VERSION__" || "$VERSION" == "latest" ]]; then
+    # Trigger GitHub API resolution when:
+    # - VERSION is "latest" (explicit)
+    # - VERSION still contains the CI placeholder pattern (letters/underscores,
+    #   i.e. sed did NOT run and we have the raw "__VERSION__" token)
+    # Note: a real version number is digits+dots only, so `[a-zA-Z_]` is a
+    # reliable marker of "placeholder". We avoid literal "__VERSION__" here
+    # because the CI sed replacement rewrites every occurrence in this file,
+    # including the comparison string.
+    if [[ "$VERSION" == "latest" || "$VERSION" =~ [a-zA-Z_] ]]; then
         info "Resolving latest version from GitHub API..."
 
         if command -v curl &>/dev/null; then
