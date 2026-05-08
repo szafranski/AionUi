@@ -134,6 +134,8 @@ N1 requirements 已经 push 在这个分支上)。
 
 ### 第 1 步:环境预检
 
+#### 前端仓 + team-mode
+
 ```bash
 # 确认在 AionUi 仓库
 cd /Users/zhoukai/Documents/github/AionUi && pwd
@@ -149,8 +151,38 @@ git log --oneline origin/feat/backend-migration -1
 # 确认 N1 的起点分支已存在(前面设计阶段已 push)
 git fetch origin feat/cleanup-and-test-rewrite
 git log --oneline origin/feat/cleanup-and-test-rewrite -3
-# 预期:至少有 2 个 docs commit(总设计 + N1 requirements + 其它需求 + playbook/cheatsheet)
+# 预期:至少有 2 个 docs commit
 ```
+
+#### 双仓联调环境(UC-G 前置条件,必须验证)
+
+UC-G 允许 teammate 修改 aionui-backend,这依赖本机已按
+`~/Documents/github/aionui-backend/docs/development-workflow.md` 配好双仓
+联调环境。team-lead 派 N1 executor 前**必须**验证:
+
+```bash
+# 1. backend 仓存在且可编译
+test -d ~/Documents/github/aionui-backend && \
+  (cd ~/Documents/github/aionui-backend && cargo check --workspace) \
+  || echo "BLOCKED: backend 仓未克隆或编译失败,UC-G 走不通"
+
+# 2. symlink 就位(前端 binaryResolver 靠它找 backend)
+ls -la ~/.cargo/bin/aionui-backend 2>&1 | head -1
+# 预期:输出开头是 'l'(symlink);不是 → 提示 teammate 按 cheatsheet UC-G
+#      环境预检节建 symlink
+
+# 3. which 解析正确
+which aionui-backend
+# 预期:/Users/<user>/.cargo/bin/aionui-backend
+
+# 4. cargo-watch 已装(推荐,非强制)
+which cargo-watch || echo "建议:cargo install cargo-watch"
+```
+
+以上 4 项任一不满足时,team-lead **在派 N1 executor 的 prompt 里加一条**
+"首阶段先按 cheatsheet UC-G '环境预检'节建 symlink 并在 handoff 附输出"。
+不满足这些预检却擅自跳过,后续 UC-G 触发时会直接挂(backend 改动前端收
+不到)。
 
 ### 第 2 步:建团队
 
@@ -294,11 +326,21 @@ Agent({
 ### 第 4 步:整链合入 dev + 真 CI 验证(team-lead 核心责任)
 
 N5 executor 完成并 handoff 后,team-lead **不立即 TeamDelete**,先做整链真
-CI 验证(UC-F-2 的关键一步):
+CI 验证(UC-F-2 + UC-G-5 的关键一步):
 
 ```bash
 # 1. 再次确认 UC-F-1..5 证据齐全(见"UC-F 违反的处理"节)
-# 2. 整链合入 dev
+#
+# 2. (UC-G-5)先处理 backend 同步:
+#    - 汇总 N1..N5 所有 handoff 的"Backend 修改"节,列出 backend 分支清单
+grep -A20 "^## Backend 修改" docs/backend-migration/handoffs/N{1,2,3,4,5}-outcome.md
+#    - 协调人类(或权限允许时自身)把这些 backend 分支 PR+merge 到
+#      aionui-backend/main;等 backend 新版本可用
+#    - 若 dev 依赖打包 backend 二进制(AIONUI_BACKEND_VERSION env),
+#      更新到新版本
+#    - **backend 未同步前不得进入 step 3**,否则 CI 用老 backend 必挂
+#
+# 3. 整链合入 dev
 git fetch origin
 git checkout dev
 git pull origin dev
@@ -317,7 +359,7 @@ gh run watch "$RUN_ID"
 
 **失败处理**:
 
-- 明显代码问题 → **不得**在 dev 上 hot-fix:
+- 明显代码问题(指向前端)→ **不得**在 dev 上 hot-fix:
   ```bash
   # 回滚刚才的 merge
   git revert --no-edit -m 1 HEAD
@@ -327,6 +369,9 @@ gh run watch "$RUN_ID"
   ```
   回到链尾某里程碑的 feature 分支补 commit(通过 `gh run view <id>` 分析
   哪层失败,对应里程碑 executor 重派);修完再整链合入
+- 明显指向 backend(UC-G-6)→ 同上 revert dev;派原里程碑 executor 到
+  backend **同名分支**补 commit;重走 UC-G-5 的 backend 同步;整链再合;
+  ≥ 2 次 "backend 补丁后重合" 循环 escalate 给人类
 - 非代码问题(registry timeout 等):允许 `gh run rerun <id>` 一次并说明
 - ≥ 2 次 flaky:escalate 人类调查根因
 

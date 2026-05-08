@@ -6,9 +6,12 @@
 - **对应总设计**:`2026-05-08-cleanup-and-test-rewrite-design.md` →
   UC-E / UC-F / 里程碑清单 N5 行
 - **执行前必读**:
-  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束)
+  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束;N5 不直接
+    写新测试,但 **UC-G-6** 规定了"整链合入 dev 后 CI fail 是 backend 问题
+    时"的处理路径,team-lead 要按它走)
   - 本文档(requirements)
-  - `handoffs/N4-outcome.md`(上游)
+  - `handoffs/N4-outcome.md`(上游;**特别查看其 "Backend 修改" 节**,了解
+    N4 改过哪些 backend crate,整链合入 dev 前要先让 backend 合入 main)
   - `handoffs/ci-web-cli-release-outcome.md`(未解决的 TODO 节——N5 要把它改 DONE)
 
 ## 做什么

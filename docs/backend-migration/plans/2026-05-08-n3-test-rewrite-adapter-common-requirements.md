@@ -6,7 +6,8 @@
 - **对应总设计**:`2026-05-08-cleanup-and-test-rewrite-design.md` →
   UC-C / UC-D / UC-F / 测试覆盖清单(N3/N4)
 - **执行前必读**:
-  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束)
+  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束,**特别是
+    UC-F-4 + UC-G**:写测试发现 backend bug 时按 UC-G 改 backend,不得 skip)
   - 本文档(requirements)
   - `2026-05-08-n3-test-rewrite-adapter-common.md`(executor 必读;由 plan-writer 产出)
   - `handoffs/N2-outcome.md`(上游)

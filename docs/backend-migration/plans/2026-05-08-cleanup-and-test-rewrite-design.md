@@ -274,10 +274,14 @@ grep -rn "<basename>" \
 - 使用 `bunx vitest run --reporter=verbose`,handoff 贴输出(至少列出每个新增
   测试文件对应的 `✓` 行 + 总计 `N passed` 数字)
 - 总 test count **必须 ≥ requirements 清单预期数**;低于预期需 escalate 解释
-- **禁止 `.skip` / `.todo`**;特殊情况必须有 `// BLOCKED: <reason + issue/tracking>`
-  行内注释,并在 handoff 独立一节列出所有被 block 的点 + 跟进计划
+- **严禁 `.skip` / `.todo` / `xit` / `xtest`**;清单里每个测试文件必须真正写
+  出可运行的断言
 - 测试不得依赖真实网络 / 真实文件系统之外的外部服务(backend / OAuth / …);
   全部走 N3 沉淀的 `mockHttpBridge` 或 `vi.mock`
+- 若写测试时发现前端逻辑实际依赖 backend 尚未实现 / 实现不符的行为:**不得**
+  用 skip 绕过,也不得把"错误现状"写成断言;按 UC-G 的跨仓修改流程,在
+  aionui-backend 仓本地改掉使 backend 行为符合预期,再回到前端写正常的
+  mock + 断言
 
 #### UC-F-5:本地门禁顺序 + 基线同步后必须完整复跑
 
@@ -312,6 +316,122 @@ Step 4 发现新失败的处理:
 - **基线引入的破坏性变更** → escalate,**不自行修**(不应该在本里程碑 scope 里扩大范围)
 - **本里程碑和基线的隐性冲突**(文件无冲突但语义冲突)→ 修之 + 在 handoff
   "Deviations"节如实说明
+
+### UC-G:跨仓修改 aionui-backend(本链允许的唯一跨仓场景)
+
+前端测试 / 清理工作中若发现后端行为有问题(字段错、状态码错、路由缺失、
+payload shape 与 adapter 约定不符等),teammate **可以直接在本地的
+`aionui-backend` 仓库修改**。前提是本机已按
+`aionui-backend/docs/development-workflow.md` 配好了 `cargo watch -x build` +
+`~/.cargo/bin/aionui-backend` symlink,修后端源码 → cargo 增量编译 → 重启
+AionUi 即可吃到新行为。
+
+#### UC-G-1:双仓分支同名接力
+
+- teammate 在 `~/Documents/github/aionui-backend` 拉**同名**分支:
+  ```bash
+  cd ~/Documents/github/aionui-backend
+  git fetch origin
+  git checkout -b feat/n{x}-{name} origin/main
+  ```
+- 分支名**和前端本里程碑分支尾段完全一致**(如前端 `feat/n4-test-rewrite-domains`
+  → 后端 `feat/n4-test-rewrite-domains`);便于跨仓搜索
+- teammate **push 到 origin**(backend 仓也是 iOfficeAI 组织)
+- teammate **不开 PR**:backend 的 PR 由人类在整链合入时统一处理
+- 后端分支的 merge target 是 `aionui-backend/main`,由人类决定时机
+
+#### UC-G-2:严禁的事
+
+- ❌ **不得改本次前端 requirements 明确不碰的领域对应的后端 crate**(例如 N3
+  写 adapter/common 测试时不得改 `aionui-team` crate,即使觉得它 bug);
+  若后端 bug 跨 crate 且超出本里程碑 scope → escalate,不顺手修
+- ❌ **不得在 backend 分支上 rebase / force-push**
+- ❌ **不得 merge 到 `aionui-backend/main`** 或任何共享分支
+- ❌ **不得开 PR**(PR 由人类在整链收尾时发起,和前端合入 dev 同步协调)
+- ❌ **不得修改 aionui-backend 的 CI、release-please、rust-toolchain、
+  Cargo.lock 之外 crates 目录的公共文件**(这类改动风险高,必须 escalate)
+
+#### UC-G-3:验证流程(本地,不触发 backend CI)
+
+修 backend 后,teammate 必须在**本地**做完以下验证再回前端继续:
+
+```bash
+cd ~/Documents/github/aionui-backend
+
+# 1. 类型检查 + lint
+cargo check --workspace
+cargo clippy --workspace -- -D warnings
+
+# 2. 受影响 crate 的测试(只跑相关的,别一把梭全仓)
+cargo test -p <受影响的 crate,如 aionui-system / aionui-office>
+
+# 3. 格式化
+cargo fmt --all -- --check
+
+# 4. 重启前端验证 end-to-end 行为
+# (关闭 AionUi,cargo watch 已重编译,重启 bun start)
+```
+
+**不要求**触发 aionui-backend 的 CI(它有独立 Release CI,不在本链 scope)。
+
+#### UC-G-4:handoff 必记录 Backend 修改
+
+teammate 的前端 handoff 文件必须新增一节 **"Backend 修改"**(没改就写"无"):
+
+```markdown
+## Backend 修改
+
+- 仓库:iOfficeAI/aionui-backend
+- 分支:feat/n{x}-{name}
+- 最新 SHA:<push 后的 SHA>
+- 修改文件:
+  - `crates/aionui-system/src/bedrock_probe.rs`(+12 / -3)
+  - `crates/aionui-api-types/src/provider.rs`(+4 / -0)
+- 一句话理由:backend 返回 provider.id 为 Option<String>,adapter 期望非空
+  String;修 backend 改为必填(符合 API type 约定)
+- 验证:`cargo test -p aionui-system`(N passed);前端重启后对应测试变绿
+- **待办**(人类):该 backend 分支还没开 PR,链合入 dev 时需同步把 backend
+  分支 PR 到 `aionui-backend/main` 并合入
+```
+
+#### UC-G-5:整链合入 dev 前的后端同步(team-lead 责任)
+
+整链合入 dev 前,team-lead 必须:
+
+1. 检查所有 handoff 的"Backend 修改"节,收集所有 backend 分支 SHA
+2. 确认这些分支都已 push 到 `iOfficeAI/aionui-backend`
+3. 协调人类(或自身权限允许时)**在 backend 仓先把这些分支 PR + merge 到
+   `aionui-backend/main`**,并等 backend Release CI 出新版本
+4. `feat/backend-migration` / dev 若使用打包的 backend 二进制(`AIONUI_BACKEND_VERSION`
+   env),更新到新版本后才整链合入 dev 触发 `build-and-release.yml`
+5. 若 dev 的 backend 来源是 cargo path / 本地 symlink,等 backend main
+   合入后,CI 机器拉最新 main 即可
+
+**不得在 backend 未合入前就把前端链合入 dev**,否则 CI 用老 backend 跑测
+新前端必然挂。
+
+#### UC-G-6:CI fail 是 backend 问题时的处理
+
+整链合入 dev 后 `build-and-release.yml` fail,诊断指向 backend 问题:
+
+1. team-lead **立即** `git revert` dev 上的整链 merge commit(保持 dev 干净)
+2. 回到对应里程碑 teammate(或新派一个),在 backend 仓的同名分支上补 commit
+3. 重新走 UC-G-5 的 backend 同步流程
+4. 整链再次合入 dev 重跑 CI
+5. 允许 1 次"backend 补丁后再合"的循环;≥ 2 次 escalate 给人类诊断根因
+
+#### UC-G-7:什么情况不走 UC-G 直接 escalate
+
+- 需要改 backend **超出本里程碑 scope 领域**(N3 不应修 team crate 等)
+- 需要改 backend **公共基础设施**(CI / release-please / Cargo workspace 配置 /
+  rust-toolchain.toml)
+- 需要改 backend **DB schema / migration**(schema 改动向下兼容性复杂,必须
+  人类审)
+- 需要改 backend **API 破坏性变更**(删 route / 改 route 签名 / 改返回类型):
+  前端 adapter 也要改,变成跨里程碑的大修,必须人类审
+
+以上任一情况:teammate 把发现写进 handoff "Backend 问题发现(需 escalate)"
+节,**不自己改**,SendMessage 给 team-lead → 人类决策。
 
 ## 落地路径与里程碑
 

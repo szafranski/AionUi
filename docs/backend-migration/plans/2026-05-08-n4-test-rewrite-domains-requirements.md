@@ -6,7 +6,11 @@
 - **对应总设计**:`2026-05-08-cleanup-and-test-rewrite-design.md` →
   UC-C / UC-D / UC-F / 测试覆盖清单
 - **执行前必读**:
-  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束)
+  - `2026-05-08-cleanup-teammate-cheatsheet.md`(teammate 硬约束,**特别是
+    UC-F-4 + UC-G**:54 个领域测试写的时候大概率会撞 backend 行为不符,按
+    UC-G 改 backend,不得 skip;N4a/N4b/N4c 三个并行 executor **共享同一个
+    backend 分支 `feat/n4-test-rewrite-domains`**(与前端分支同名),按前端
+    同样的 "先到先 push,后到 pull --rebase" 规则协同,零 crate 重叠)
   - 本文档(requirements)
   - `2026-05-08-n4-test-rewrite-domains.md`(executor 必读;由 plan-writer 产出,含 N4a/N4b/N4c 分区)
   - `handoffs/N3-outcome.md`(上游;**重要**:N3 handoff 里锁定的 `mockHttpBridge` 签名)
