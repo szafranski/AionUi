@@ -25,11 +25,8 @@ import NanobotChat from '../platforms/nanobot/NanobotChat';
 import OpenClawChat from '../platforms/openclaw/OpenClawChat';
 import RemoteChat from '../platforms/remote/RemoteChat';
 import GeminiChat from '../platforms/gemini/GeminiChat';
-import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
-import GeminiModelSelector from '../platforms/gemini/GeminiModelSelector';
 import { useGeminiModelSelection } from '../platforms/gemini/useGeminiModelSelection';
 import AionrsChat from '../platforms/aionrs/AionrsChat';
-import AionrsModelSelector from '../platforms/aionrs/AionrsModelSelector';
 import { useAionrsModelSelection } from '../platforms/aionrs/useAionrsModelSelection';
 import { usePreviewContext } from '../Preview';
 import StarOfficeMonitorCard from '../platforms/openclaw/StarOfficeMonitorCard.tsx';
@@ -153,7 +150,7 @@ const GeminiConversationPanel: React.FC<{
     [conversation.id]
   );
 
-  // Share model selection state between header and send box
+  // Share model selection state with the send box model picker
   const modelSelection = useGeminiModelSelection({ initialModel: conversation.model, onSelectModel });
   const workspaceEnabled = Boolean(conversation.extra?.workspace);
 
@@ -165,7 +162,6 @@ const GeminiConversationPanel: React.FC<{
     title: conversation.name,
     siderTitle: sliderTitle,
     sider: <ChatSider conversation={conversation} />,
-    headerLeft: <GeminiModelSelector selection={modelSelection} />,
     headerExtra: (
       <div className='flex items-center gap-8px'>
         <ConversationSkillsIndicator conversation={conversation} />
@@ -224,7 +220,6 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
     title: conversation.name,
     siderTitle: sliderTitle,
     sider: <ChatSider conversation={conversation} />,
-    headerLeft: <AionrsModelSelector selection={modelSelection} />,
     headerExtra: (
       <div className='flex items-center gap-8px'>
         <ConversationSkillsIndicator conversation={conversation} />
@@ -284,6 +279,7 @@ const ChatConversation: React.FC<{
             backend={conversation.extra?.backend || 'claude'}
             sessionMode={conversation.extra?.sessionMode}
             cachedConfigOptions={conversation.extra?.cachedConfigOptions}
+            initialModelId={(conversation.extra as { currentModelId?: string })?.currentModelId}
             agentName={assistantDisplayName}
             cronJobId={(conversation.extra as { cronJobId?: string })?.cronJobId}
             hideSendBox={hideSendBox}
@@ -304,6 +300,7 @@ const ChatConversation: React.FC<{
                 }
               )?.cachedConfigOptions
             }
+            initialModelId={(conversation.extra as { currentModelId?: string })?.currentModelId}
             hideSendBox={hideSendBox}
           />
         );
@@ -346,27 +343,6 @@ const ChatConversation: React.FC<{
       </div>
     );
   }, [t]);
-
-  // For ACP/Codex conversations, use AcpModelSelector that can show/switch models.
-  // For other non-Gemini conversations, show disabled GeminiModelSelector.
-  // NOTE: This must be placed before the Gemini early return to maintain consistent hook order.
-  const modelSelector = useMemo(() => {
-    if (!conversation || isGeminiConversation || isAionrsConversation) return undefined;
-    if (conversation.type === 'acp') {
-      const extra = conversation.extra as { backend?: string; currentModelId?: string };
-      return (
-        <AcpModelSelector
-          conversationId={conversation.id}
-          backend={extra.backend}
-          initialModelId={extra.currentModelId}
-        />
-      );
-    }
-    if (conversation.type === 'codex') {
-      return <AcpModelSelector conversationId={conversation.id} />;
-    }
-    return <GeminiModelSelector disabled={true} />;
-  }, [conversation, isGeminiConversation, isAionrsConversation]);
 
   if (conversation && conversation.type === 'aionrs') {
     return <AionrsConversationPanel key={conversation.id} conversation={conversation} sliderTitle={sliderTitle} />;
@@ -440,7 +416,6 @@ const ChatConversation: React.FC<{
     <ChatLayout
       title={conversation?.name}
       {...chatLayoutProps}
-      headerLeft={modelSelector}
       headerExtra={headerExtraNode}
       siderTitle={sliderTitle}
       sider={<ChatSider conversation={conversation} />}

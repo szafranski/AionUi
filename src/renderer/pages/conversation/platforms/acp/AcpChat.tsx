@@ -20,6 +20,7 @@ const AcpChat: React.FC<{
   backend: AcpBackend;
   sessionMode?: string;
   cachedConfigOptions?: import('@/common/types/acpTypes').AcpSessionConfigOption[];
+  initialModelId?: string;
   agentName?: string;
   cronJobId?: string;
   hideSendBox?: boolean;
@@ -32,6 +33,7 @@ const AcpChat: React.FC<{
   backend,
   sessionMode,
   cachedConfigOptions,
+  initialModelId,
   agentName,
   cronJobId,
   hideSendBox,
@@ -54,6 +56,7 @@ const AcpChat: React.FC<{
               backend={backend}
               sessionMode={sessionMode}
               cachedConfigOptions={cachedConfigOptions}
+              initialModelId={initialModelId}
               agentName={agentName}
               workspacePath={workspace}
               teamId={teamId}

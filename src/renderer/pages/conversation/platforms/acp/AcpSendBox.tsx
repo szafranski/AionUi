@@ -3,6 +3,7 @@ import { isSideQuestionSupported } from '@/common/chat/sideQuestion';
 import type { AcpBackend } from '@/common/types/acpTypes';
 import { uuid } from '@/common/utils';
 import AcpConfigSelector from '@/renderer/components/agent/AcpConfigSelector';
+import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
 import AgentModeSelector from '@/renderer/components/agent/AgentModeSelector';
 import ContextUsageIndicator from '@/renderer/components/agent/ContextUsageIndicator';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
@@ -94,6 +95,7 @@ const AcpSendBox: React.FC<{
   backend: AcpBackend;
   sessionMode?: string;
   cachedConfigOptions?: import('@/common/types/acpTypes').AcpSessionConfigOption[];
+  initialModelId?: string;
   agentName?: string;
   workspacePath?: string;
   teamId?: string;
@@ -103,6 +105,7 @@ const AcpSendBox: React.FC<{
   backend,
   sessionMode,
   cachedConfigOptions,
+  initialModelId,
   agentName,
   workspacePath,
   teamId,
@@ -368,6 +371,7 @@ Please check your local CLI tool authentication status`,
         tools={
           <div className='flex items-center gap-4px'>
             <FileAttachButton openFileSelector={openFileSelector} onLocalFilesAdded={handleFilesAdded} />
+            <AcpModelSelector conversationId={conversation_id} backend={backend} initialModelId={initialModelId} />
             {showModeSelector && (
               <AgentModeSelector
                 backend={backend}

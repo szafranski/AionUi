@@ -16,7 +16,7 @@ const GeminiModelSelector: React.FC<{
   selection?: GeminiModelSelection;
   disabled?: boolean;
   label?: string;
-  variant?: 'header' | 'settings';
+  variant?: 'header' | 'sendbox' | 'settings';
 }> = ({ selection, disabled = false, label: customLabel, variant = 'header' }) => {
   const { t } = useTranslation();
   const { isOpen: isPreviewOpen } = usePreviewContext();

@@ -35,6 +35,7 @@ import { Message, Tag } from '@arco-design/web-react';
 import { Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import GeminiModelSelector from './GeminiModelSelector';
 import { useGeminiInitialMessage } from './useGeminiInitialMessage';
 import { useGeminiMessage } from './useGeminiMessage';
 import type { GeminiModelSelection } from './useGeminiModelSelection';
@@ -454,6 +455,7 @@ const GeminiSendBox: React.FC<{
         tools={
           <div className='flex items-center gap-4px'>
             <FileAttachButton openFileSelector={openFileSelector} onLocalFilesAdded={handleFilesAdded} />
+            <GeminiModelSelector selection={modelSelection} variant='sendbox' />
             {showModeSelector && (
               <AgentModeSelector
                 backend='gemini'
