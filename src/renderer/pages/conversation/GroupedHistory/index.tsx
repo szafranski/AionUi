@@ -54,8 +54,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
     ({ sectionKey, label, trailing }: { sectionKey: string; label: string; trailing?: React.ReactNode }) => {
       const isCollapsed = collapsedSections.has(sectionKey);
       return (
-        <div className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-fill-2 mt-4px'>
-          <span className='text-12px text-t-tertiary font-normal leading-none'>{label}</span>
+        <div className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-2 mt-4px'>
+          <span className='text-12px text-t-secondary font-normal leading-none'>{label}</span>
           <span
             className='ml-2px flex items-center justify-center cursor-pointer opacity-0 group-hover/label:opacity-100 transition-opacity text-t-tertiary shrink-0'
             onClick={() => toggleSection(sectionKey)}
@@ -623,7 +623,7 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
                 <div key={section.timeline} className='min-w-0'>
                   {!collapsed && conversationOnlySections.length > 1 && (
                     <div className='flex items-center px-16px h-24px select-none'>
-                      <span className='text-12px text-t-tertiary font-normal leading-none'>{section.timeline}</span>
+                      <span className='text-12px text-t-secondary font-normal leading-none'>{section.timeline}</span>
                     </div>
                   )}
                   {section.items.map((item) =>

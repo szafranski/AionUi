@@ -254,7 +254,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         const groupHeaderKey = groupHeaderAt.get(index);
         const groupHeader =
           groupHeaderKey && !collapsed ? (
-            <div className='settings-sider__group-header px-12px pt-8px pb-0 h-28px flex items-center text-12px font-normal text-t-tertiary select-none'>
+            <div className='settings-sider__group-header px-12px pt-8px pb-0 h-28px flex items-center text-12px font-normal text-t-secondary select-none'>
               {t(groupHeaderKey)}
             </div>
           ) : null;
@@ -301,9 +301,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
                   )}
                 </span>
                 <FlexFullContainer className='h-24px collapsed-hidden'>
-                  <div
-                    className='settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary'
-                  >
+                  <div className='settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary'>
                     {item.label}
                   </div>
                 </FlexFullContainer>
