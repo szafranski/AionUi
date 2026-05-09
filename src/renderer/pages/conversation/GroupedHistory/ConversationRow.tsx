@@ -21,6 +21,20 @@ import type { ConversationRowProps } from './types';
 import { getBackendKeyFromConversation } from './utils/exportHelpers';
 import { isConversationPinned } from './utils/groupingHelpers';
 
+const formatRelativeTime = (ts: number): string => {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins <= 1 ? '刚刚' : `${mins}分`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours}小时`;
+  const days = Math.floor(diff / 86400000);
+  if (days < 7) return `${days}天`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}周`;
+  const months = Math.floor(days / 30);
+  return `${months}月`;
+};
+
 const ConversationRow: React.FC<ConversationRowProps> = (props) => {
   const {
     conversation,
@@ -56,7 +70,7 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
 
   const renderLeadingIcon = () => {
     if (cronStatus !== 'none') {
-      return <CronJobIndicator status={cronStatus} size={20} className='flex-shrink-0' />;
+      return <CronJobIndicator status={cronStatus} size={16} className='flex-shrink-0' />;
     }
 
     // Agent icons: dimmed by default only inside project folders, full color on row hover.
@@ -73,7 +87,7 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
         <img
           src={assistantInfo.logo}
           alt={assistantInfo.name}
-          className={classNames('w-18px h-18px rounded-50% flex-shrink-0', dimmedClass)}
+          className={classNames('w-16px h-16px rounded-50% flex-shrink-0', dimmedClass)}
         />
       );
     }
@@ -85,12 +99,12 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
         <img
           src={logo}
           alt={`${backendKey || 'agent'} logo`}
-          className={classNames('w-18px h-18px rounded-50% flex-shrink-0', dimmedClass)}
+          className={classNames('w-16px h-16px rounded-50% flex-shrink-0', dimmedClass)}
         />
       );
     }
 
-    return <MessageOne theme='outline' size='20' className={classNames('line-height-0 flex-shrink-0', dimmedClass)} />;
+    return <MessageOne theme='outline' size='16' className={classNames('line-height-0 flex-shrink-0', dimmedClass)} />;
   };
 
   const handleRowClick = () => {
@@ -134,11 +148,11 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
       <div
         id={'c-' + conversation.id}
         className={classNames(
-          'chat-history__item h-34px rd-8px flex items-center group cursor-pointer relative overflow-hidden shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-1px min-w-0 transition-colors',
-          collapsed ? 'justify-center px-0' : 'justify-start gap-6px px-14px',
+          'chat-history__item h-34px rd-8px flex items-center group cursor-pointer relative overflow-hidden shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px min-w-0 transition-colors',
+          collapsed ? 'justify-center px-0' : 'justify-start gap-8px pr-0 pl-10px',
           {
-            'hover:bg-[rgba(var(--primary-6),0.14)]': !batchMode,
-            '!bg-active': selected,
+            'hover:bg-fill-3': !batchMode && !selected,
+            '!bg-fill-3': selected,
             'bg-[rgba(var(--primary-6),0.08)]': batchMode && checked,
           }
         )}
@@ -156,7 +170,7 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
             <Checkbox checked={checked} />
           </span>
         )}
-        <span className='w-28px h-28px flex items-center justify-center shrink-0'>
+        <span className='size-22px flex items-center justify-center shrink-0'>
           {isGenerating && !batchMode ? <Spin size={16} /> : renderLeadingIcon()}
         </span>
         <FlexFullContainer
@@ -175,16 +189,18 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
             position='top'
           >
             <div
-              className={classNames(
-                'chat-history__item-name overflow-hidden text-ellipsis block w-full text-14px lh-24px whitespace-nowrap min-w-0 group-hover:text-1',
-                selected && !batchMode ? 'text-1 font-medium' : 'text-2'
-              )}
+              className='chat-history__item-name overflow-hidden text-ellipsis block w-full text-14px lh-24px whitespace-nowrap min-w-0 text-t-primary'
             >
               <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>{conversation.name}</span>
             </div>
           </Tooltip>
         </FlexFullContainer>
 
+        {!collapsed && !batchMode && !isGenerating && !isPinned && (
+          <span className='collapsed-hidden text-11px text-t-tertiary shrink-0 leading-none group-hover:hidden'>
+            {formatRelativeTime(conversation.modifyTime)}
+          </span>
+        )}
         {renderCompletionUnreadDot()}
         {!batchMode && isPinned && !menuVisible && !isMobile && (
           <span className='absolute right-8px top-1/2 -translate-y-1/2 flex-center text-t-secondary pointer-events-none !collapsed-hidden group-hover:hidden'>

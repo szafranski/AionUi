@@ -11,9 +11,8 @@ import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button, Dropdown, Empty, Input, Menu, Modal } from '@arco-design/web-react';
 import AionModal from '@/renderer/components/base/AionModal';
-import { Delete, FolderOpen, More } from '@icon-park/react';
+import { Delete, FolderOpen, More, Right } from '@icon-park/react';
 import classNames from 'classnames';
-import { Down, Right } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -40,15 +39,48 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
   const { id } = useParams();
   const { t } = useTranslation();
   const { getJobStatus, markAsRead, setActiveConversation } = useCronJobsMap();
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set());
+
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const toggleSection = useCallback((key: string) => {
     setCollapsedSections((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   }, []);
+
+  const SectionLabel = useCallback(
+    ({
+      sectionKey,
+      label,
+      trailing,
+    }: {
+      sectionKey: string;
+      label: string;
+      trailing?: React.ReactNode;
+    }) => {
+      const isCollapsed = collapsedSections.has(sectionKey);
+      return (
+        <div className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-fill-2'>
+          <span className='text-12px text-t-tertiary font-normal leading-none'>
+            {label}
+          </span>
+          <span
+            className='ml-2px flex items-center justify-center cursor-pointer opacity-0 group-hover/label:opacity-100 transition-opacity text-t-tertiary shrink-0'
+            onClick={() => toggleSection(sectionKey)}
+          >
+            <Right
+              theme='outline'
+              size={12}
+              className={classNames('transition-transform duration-150', { 'rotate-90': !isCollapsed })}
+            />
+          </span>
+          {trailing && <div className='ml-auto'>{trailing}</div>}
+        </div>
+      );
+    },
+    [collapsedSections, toggleSection]
+  );
 
   // Sync active conversation ref when route changes (for URL navigation)
   // This doesn't trigger state update, avoiding double render
@@ -466,21 +498,7 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
           {pinnedConversations.length > 0 && (
             <div className='mb-8px min-w-0'>
               {!collapsed && (
-                <div
-                  className='flex items-center px-12px py-8px cursor-pointer select-none sticky top-0 z-10 bg-fill-2'
-                  onClick={() => toggleSection('pinned')}
-                >
-                  <span className='text-13px text-t-secondary font-bold leading-20px'>
-                    {t('conversation.history.pinnedSection')}
-                  </span>
-                  <div className='ml-auto h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 text-t-secondary'>
-                    {collapsedSections.has('pinned') ? (
-                      <Right theme='outline' size={12} />
-                    ) : (
-                      <Down theme='outline' size={12} />
-                    )}
-                  </div>
-                </div>
+                <SectionLabel sectionKey='pinned' label={t('conversation.history.pinnedSection')} />
               )}
               {!collapsedSections.has('pinned') && (
                 <SortableContext items={pinnedIds} strategy={verticalListSortingStrategy}>
@@ -506,28 +524,16 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
 
         {afterPinnedContent}
 
-        {/* 项目 section: Codex-style flat list of workspace folders */}
+        {/* 项目 section — L1，与对话平级 */}
         {projectGroups.length > 0 && (
           <div className='mb-8px min-w-0'>
             {!collapsed && (
-              <div
-                className='flex items-center px-12px py-8px cursor-pointer select-none sticky top-0 z-10 bg-fill-2'
-                onClick={() => toggleSection('projects')}
-              >
-                <span className='text-13px text-t-secondary font-bold leading-20px'>
-                  {t('conversation.history.projectsSection', { defaultValue: '项目' })}
-                </span>
-                <div className='ml-auto h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 text-t-secondary'>
-                  {collapsedSections.has('projects') ? (
-                    <Right theme='outline' size={12} />
-                  ) : (
-                    <Down theme='outline' size={12} />
-                  )}
-                </div>
-              </div>
+              <SectionLabel
+                sectionKey='projects'
+                label={t('conversation.history.projectsSection', { defaultValue: '项目' })}
+              />
             )}
-            {!collapsedSections.has('projects') &&
-              projectGroups.map((group) => {
+            {!collapsedSections.has('projects') && projectGroups.map((group) => {
                 const projectMenu = (
                   <Menu
                     onClickMenuItem={(key) => {
@@ -551,8 +557,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
                       onToggle={() => handleToggleWorkspace(group.workspace)}
                       siderCollapsed={collapsed}
                       header={
-                        <div className='flex items-center gap-8px text-14px min-w-0'>
-                          <span className='truncate flex-1 text-t-primary min-w-0'>{group.displayName}</span>
+                        <div className='flex items-center gap-6px text-13px min-w-0'>
+                          <span className='truncate flex-1 text-2 min-w-0'>{group.displayName}</span>
                         </div>
                       }
                       trailing={
@@ -573,7 +579,7 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
                         </Dropdown>
                       }
                     >
-                      <div className={classNames('flex flex-col gap-2px min-w-0', { 'mt-2px': !collapsed })}>
+                      <div className={classNames('flex flex-col min-w-0', { 'mt-1px': !collapsed })}>
                         {group.conversations.map((conversation) => renderConversation(conversation, true))}
                       </div>
                     </WorkspaceCollapse>
@@ -583,31 +589,30 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
           </div>
         )}
 
-        {/* 对话 section: Codex-style timeline of free (non-project) conversations */}
-        {conversationOnlySections.map((section) => (
-          <div key={section.timeline} className='mb-8px min-w-0'>
+        {/* 对话 section — L1，与项目平级，内部按时间线分组 */}
+        {conversationOnlySections.length > 0 && (
+          <div className='mb-8px min-w-0'>
             {!collapsed && (
-              <div
-                className='flex items-center px-12px py-8px cursor-pointer select-none sticky top-0 z-10 bg-fill-2'
-                onClick={() => toggleSection(section.timeline)}
-              >
-                <span className='text-13px text-t-secondary font-bold leading-20px'>{section.timeline}</span>
-                <div className='ml-auto h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 text-t-secondary'>
-                  {collapsedSections.has(section.timeline) ? (
-                    <Right theme='outline' size={12} />
-                  ) : (
-                    <Down theme='outline' size={12} />
+              <SectionLabel
+                sectionKey='conversations'
+                label={t('conversation.history.conversationsSection', { defaultValue: '对话' })}
+              />
+            )}
+            {!collapsedSections.has('conversations') &&
+              conversationOnlySections.map((section) => (
+                <div key={section.timeline} className='min-w-0'>
+                  {!collapsed && conversationOnlySections.length > 1 && (
+                    <div className='flex items-center px-16px h-24px select-none'>
+                      <span className='text-12px text-t-tertiary font-normal leading-none'>{section.timeline}</span>
+                    </div>
+                  )}
+                  {section.items.map((item) =>
+                    item.type === 'conversation' && item.conversation ? renderConversation(item.conversation) : null
                   )}
                 </div>
-              </div>
-            )}
-
-            {!collapsedSections.has(section.timeline) &&
-              section.items.map((item) =>
-                item.type === 'conversation' && item.conversation ? renderConversation(item.conversation) : null
-              )}
+              ))}
           </div>
-        ))}
+        )}
       </div>
     </>
   );

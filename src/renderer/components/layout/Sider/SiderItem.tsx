@@ -55,17 +55,17 @@ const SiderItem: React.FC<SiderItemProps> = ({
     >
       <div
         className={classNames(
-          'h-32px rd-8px flex items-center gap-10px px-14px cursor-pointer relative overflow-hidden shrink-0 group min-w-0 transition-colors',
+          'h-34px rd-8px flex items-center gap-8px pl-10px pr-8px cursor-pointer relative overflow-hidden shrink-0 group min-w-0 transition-colors',
           {
-            'hover:bg-[rgba(var(--primary-6),0.14)]': true,
-            '!bg-active': selected,
+            'hover:bg-fill-3': !selected,
+            '!bg-fill-3': selected,
           }
         )}
         onClick={onClick}
         onContextMenu={onContextMenu}
       >
         {/* Leading icon — fixed 28px column to align with other sidebar rows */}
-        <span className='w-28px h-28px flex items-center justify-center shrink-0 line-height-0'>{icon}</span>
+        <span className='size-22px flex items-center justify-center shrink-0 line-height-0'>{icon}</span>
 
         {/* Name with truncation — reserve extra room on the right when pinned
             so the pushpin never overlaps the text in the resting state. */}
@@ -73,10 +73,7 @@ const SiderItem: React.FC<SiderItemProps> = ({
           className={classNames('h-24px min-w-0 flex-1 overflow-hidden', pinned ? styles.pinnedTextSlot : 'pr-18px')}
         >
           <div
-            className={classNames(
-              'overflow-hidden text-ellipsis block w-full text-14px lh-24px whitespace-nowrap min-w-0 group-hover:text-1',
-              selected ? 'text-1 font-medium' : 'text-2'
-            )}
+            className='overflow-hidden text-ellipsis block w-full text-14px lh-24px whitespace-nowrap min-w-0 text-t-primary'
           >
             <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>{name}</span>
           </div>

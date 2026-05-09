@@ -441,7 +441,7 @@ const Layout: React.FC<{
               {!collapsed && <Titlebar workspaceAvailable={workspaceAvailable} />}
               <ArcoLayout.Header
                 className={classNames(
-                  'flex items-center justify-start py-8px px-14px gap-10px layout-sider-header',
+                  'flex items-center justify-start py-12px pl-10px pr-8px gap-12px layout-sider-header',
                   isMobile && 'layout-sider-header--mobile',
                   {
                     'cursor-pointer group ': collapsed,
@@ -456,7 +456,7 @@ const Layout: React.FC<{
                 >
                   <svg
                     className={classNames('w-5.5 h-5.5 absolute inset-0 m-auto', {
-                      ' scale-140': !collapsed,
+                      'scale-140': !collapsed,
                     })}
                     viewBox='0 0 80 80'
                     fill='none'
@@ -477,7 +477,7 @@ const Layout: React.FC<{
                     ></path>
                   </svg>
                 </div>
-                <div className='flex-1 text-16px text-1 collapsed-hidden font-bold'>AionUi</div>
+                <div className='text-16px text-t-primary collapsed-hidden font-semibold'>AionUi</div>
                 {isMobile && !collapsed && (
                   <button
                     type='button'

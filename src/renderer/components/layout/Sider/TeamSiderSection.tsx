@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DeleteOne, Down, EditOne, Peoples, Plus, Pushpin, Right } from '@icon-park/react';
+import { DeleteOne, EditOne, Peoples, Plus, Pushpin, Right } from '@icon-park/react';
 import { Input, Message, Modal, Tooltip } from '@arco-design/web-react';
 import classNames from 'classnames';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -22,7 +22,6 @@ import SiderItem from './SiderItem';
 import type { SiderMenuItem } from './SiderItem';
 
 const TEAM_PINNED_KEY = 'team-pinned-ids';
-const TEAM_EXPANDED_KEY = 'team-section-expanded';
 
 type SiderTooltipProps = React.ComponentProps<typeof Tooltip>;
 
@@ -46,7 +45,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
   const { mutate: globalMutate } = useSWRConfig();
 
   const [createTeamVisible, setCreateTeamVisible] = useState(false);
-  const [expanded, setExpanded] = useState(() => localStorage.getItem(TEAM_EXPANDED_KEY) !== 'false');
+  const [expanded, setExpanded] = useState(true);
 
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
     try {
@@ -60,14 +59,6 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
     setPinnedIds((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
       localStorage.setItem(TEAM_PINNED_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, []);
-
-  const toggleExpanded = useCallback(() => {
-    setExpanded((prev) => {
-      const next = !prev;
-      localStorage.setItem(TEAM_EXPANDED_KEY, String(next));
       return next;
     });
   }, []);
@@ -133,14 +124,14 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                       data-testid={`collapsed-team-icon-${team.id}`}
                       data-icon-fill={iconColors.primary}
                       theme='outline'
-                      size='20'
+                      size='16'
                       fill={iconColors.primary}
                       style={{ lineHeight: 0 }}
                     />
                     {(teamBadgeCounts.get(team.id) ?? 0) > 0 && (
                       <span
-                        className='absolute top-4px right-4px w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center leading-none'
-                        style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                        className='absolute top-4px right-4px w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center leading-none bg-danger-6 text-white'
+                        style={{ lineHeight: 1 }}
                       >
                         {(teamBadgeCounts.get(team.id) ?? 0) > 99 ? '99+' : teamBadgeCounts.get(team.id)}
                       </span>
@@ -154,27 +145,28 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
       ) : (
         <div className='shrink-0 flex flex-col gap-2px mb-8px'>
           <div
-            className='group flex items-center px-14px py-8px cursor-pointer select-none sticky top-0 z-10 bg-fill-2'
+            className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-fill-2'
             data-testid='team-section-toggle'
-            aria-expanded={expanded}
-            onClick={toggleExpanded}
           >
-            <span className='text-13px text-t-secondary font-bold leading-20px'>{t('team.sider.title')}</span>
-            <div
-              className='ml-auto h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0'
-              onClick={(event) => {
-                event.stopPropagation();
-                setCreateTeamVisible(true);
-              }}
+            <span className='text-12px text-t-tertiary font-normal leading-none'>{t('team.sider.title')}</span>
+            <span
+              className='ml-2px flex items-center justify-center cursor-pointer opacity-0 group-hover/label:opacity-100 transition-opacity text-t-tertiary shrink-0'
+              onClick={() => setExpanded((v) => !v)}
             >
-              <Plus theme='outline' size='14' fill='var(--color-text-2)' style={{ lineHeight: 0 }} />
-            </div>
-            <div className='ml-4px h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 text-t-secondary'>
-              {expanded ? <Down theme='outline' size={12} /> : <Right theme='outline' size={12} />}
+              <Right
+                theme='outline'
+                size={12}
+                className={classNames('transition-transform duration-150', { 'rotate-90': expanded })}
+              />
+            </span>
+            <div
+              className='ml-auto h-18px w-18px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 cursor-pointer'
+              onClick={() => setCreateTeamVisible(true)}
+            >
+              <Plus theme='outline' size='12' fill='var(--color-text-3)' style={{ lineHeight: 0 }} />
             </div>
           </div>
-          {expanded &&
-            sortedTeams.length > 0 &&
+          {expanded && sortedTeams.length > 0 &&
             sortedTeams.map((team) => {
               const isPinned = pinnedIds.includes(team.id);
               const menuItems: SiderMenuItem[] = [
@@ -199,7 +191,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
               return (
                 <div key={team.id} className='relative group'>
                   <SiderItem
-                    icon={<Peoples theme='outline' size='20' fill={iconColors.primary} style={{ lineHeight: 0 }} />}
+                    icon={<Peoples theme='outline' size='16' fill={iconColors.primary} style={{ lineHeight: 0 }} />}
                     name={team.name}
                     selected={pathname.startsWith(`/team/${team.id}`)}
                     pinned={isPinned}
@@ -235,8 +227,8 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                   />
                   {teamBadge > 0 && (
                     <span
-                      className='absolute right-11px top-1/2 -translate-y-1/2 w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center pointer-events-none z-10 group-hover:hidden'
-                      style={{ backgroundColor: '#F53F3F', color: '#fff', lineHeight: 1 }}
+                      className='absolute right-11px top-1/2 -translate-y-1/2 w-18px h-18px rounded-full text-10px font-bold flex items-center justify-center pointer-events-none z-10 group-hover:hidden bg-danger-6 text-white'
+                      style={{ lineHeight: 1 }}
                     >
                       {teamBadge > 99 ? '99+' : teamBadge}
                     </span>

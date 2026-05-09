@@ -6,7 +6,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Down, Right } from '@icon-park/react';
+import { Right } from '@icon-park/react';
+import classNames from 'classnames';
 import type { ICronJob } from '@/common/adapter/ipcBridge';
 import type { TChatConversation } from '@/common/config/storage';
 import { ipcBridge } from '@/common';
@@ -21,7 +22,7 @@ interface CronJobSiderSectionProps {
 
 const CronJobSiderSection: React.FC<CronJobSiderSectionProps> = ({ jobs, pathname, onNavigate }) => {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   // Batch-fetch conversations for all "existing" mode jobs to avoid N+1 IPC calls
   const existingModeConvIds = useMemo(
@@ -66,25 +67,28 @@ const CronJobSiderSection: React.FC<CronJobSiderSectionProps> = ({ jobs, pathnam
 
   return (
     <div className='mb-8px min-w-0'>
-      <div
-        className='group flex items-center px-14px py-8px cursor-pointer select-none sticky top-0 z-10 bg-fill-2'
-        onClick={() => setExpanded((prev) => !prev)}
-      >
-        <span className='text-13px text-t-secondary font-bold leading-20px'>{t('cron.scheduledTasks')}</span>
-        <div className='ml-auto h-20px w-20px rd-4px flex items-center justify-center hover:bg-fill-3 transition-all shrink-0 text-t-secondary'>
-          {expanded ? <Down theme='outline' size={12} /> : <Right theme='outline' size={12} />}
-        </div>
-      </div>
-      {expanded &&
-        jobs.map((job) => (
-          <CronJobSiderItem
-            key={job.id}
-            job={job}
-            pathname={pathname}
-            onNavigate={onNavigate}
-            existingConversation={existingConversations.get(job.metadata.conversationId)}
+      <div className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-fill-2'>
+        <span className='text-12px text-t-tertiary font-normal leading-none'>{t('cron.scheduledTasks')}</span>
+        <span
+          className='ml-2px flex items-center justify-center cursor-pointer opacity-0 group-hover/label:opacity-100 transition-opacity text-t-tertiary'
+          onClick={() => setExpanded((v) => !v)}
+        >
+          <Right
+            theme='outline'
+            size={12}
+            className={classNames('transition-transform duration-150', { 'rotate-90': expanded })}
           />
-        ))}
+        </span>
+      </div>
+      {expanded && jobs.map((job) => (
+        <CronJobSiderItem
+          key={job.id}
+          job={job}
+          pathname={pathname}
+          onNavigate={onNavigate}
+          existingConversation={existingConversations.get(job.metadata.conversationId)}
+        />
+      ))}
     </div>
   );
 };

@@ -40,7 +40,7 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   const settingsIcon = isSettings ? (
     <ArrowCircleLeft
       theme='outline'
-      size='20'
+      size='16'
       fill={iconColors.primary}
       className='block leading-none'
       style={{ lineHeight: 0 }}
@@ -48,7 +48,7 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   ) : (
     <SettingTwo
       theme='outline'
-      size='20'
+      size='16'
       fill={iconColors.primary}
       className='block leading-none'
       style={{ lineHeight: 0 }}
@@ -64,16 +64,16 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
           <div
             onClick={onSettingsClick}
             className={classNames(
-              'h-32px flex items-center rd-0.5rem cursor-pointer transition-colors',
-              collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-10px px-14px',
+              'h-34px flex items-center rd-0.5rem cursor-pointer transition-colors',
+              collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px pl-10px pr-8px',
               isMobile && 'sider-footer-btn-mobile',
               {
-                'bg-[rgba(var(--primary-6),0.12)] text-primary': isSettings,
-                'hover:bg-[rgba(var(--primary-6),0.14)] active:bg-fill-2': !isSettings,
+                'bg-fill-3': isSettings,
+                'hover:bg-fill-3 active:bg-fill-4': !isSettings,
               }
             )}
           >
-            <span className='size-20px flex items-center justify-center shrink-0'>{settingsIcon}</span>
+            <span className='size-22px flex items-center justify-center shrink-0'>{settingsIcon}</span>
             <span className='collapsed-hidden text-t-primary text-14px font-medium leading-24px truncate'>
               {isSettings ? t('common.back') : t('common.settings')}
             </span>
@@ -92,7 +92,7 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
               <span className='size-20px flex items-center justify-center shrink-0'>
                 <CloseOne
                   theme='outline'
-                  size='18'
+                  size='16'
                   fill={iconColors.primary}
                   className='block leading-none'
                   style={{ lineHeight: 0 }}
