@@ -152,19 +152,19 @@ L2:  h-24px  pl-16px  gap-0
 
 ## 四、图标尺寸规范
 
-| 位置 | 外层容器 | 图标实际大小 |
-|------|---------|------------|
-| 品牌区 Logo 黑块 | size-32px / rd-0.5rem（collapsed: size-24px） | SVG w-5.5 h-5.5 scale-140 居中 |
-| 品牌文字 "AionUi" | — | 16px / semibold / text-t-primary |
-| 新会话 + 外框 | size-22px / rd-6px / bg-aou-2 border | icon 14px |
-| 定时任务 icon 容器 | size-22px（无边框，纯占位对齐新会话）| icon 16px |
-| 所有 item 图标容器（统一） | size-22px | 16px |
-| Agent logo（图片） | size-22px 容器内 | w-16px h-16px rounded-full |
-| Agent emoji | size-22px 容器内 | text-16px |
-| Section chevron（收起箭头） | 无容器 | 12px，右侧，hover 显示 |
-| 右侧三点菜单图标 | p-4px rd-4px | 16px |
-| Section 右侧 + 号 | h-18px w-18px rd-4px | 12px |
-| Badge | w-18px h-18px rounded-full | text-10px |
+| 位置                        | 外层容器                                      | 图标实际大小                     |
+| --------------------------- | --------------------------------------------- | -------------------------------- |
+| 品牌区 Logo 黑块            | size-32px / rd-0.5rem（collapsed: size-24px） | SVG w-5.5 h-5.5 scale-140 居中   |
+| 品牌文字 "AionUi"           | —                                             | 16px / semibold / text-t-primary |
+| 新会话 + 外框               | size-22px / rd-6px / bg-aou-2 border          | icon 14px                        |
+| 定时任务 icon 容器          | size-22px（无边框，纯占位对齐新会话）         | icon 16px                        |
+| 所有 item 图标容器（统一）  | size-22px                                     | 16px                             |
+| Agent logo（图片）          | size-22px 容器内                              | w-16px h-16px rounded-full       |
+| Agent emoji                 | size-22px 容器内                              | text-16px                        |
+| Section chevron（收起箭头） | 无容器                                        | 12px，右侧，hover 显示           |
+| 右侧三点菜单图标            | p-4px rd-4px                                  | 16px                             |
+| Section 右侧 + 号           | h-18px w-18px rd-4px                          | 12px                             |
+| Badge                       | w-18px h-18px rounded-full                    | text-10px                        |
 
 ---
 
@@ -224,19 +224,19 @@ WorkspaceCollapse（项目文件夹）      →  <SiderItem folder />   B  L1
 
 > 每次修改后必须对照此列表人工验证，防止改坏已稳定的部分。
 
-| 检查项 | 预期效果 |
-|--------|---------|
-| 品牌区 Logo 对齐 | Logo 黑块左边缘与「新会话」`+` 外框左边缘对齐（均从 10px 开始） |
-| 新会话文字对齐 | 「新」字与「定」字左对齐 |
-| 所有 L1 item 图标对齐 | 团队/定时任务/对话行图标左边缘在同一垂直线 |
-| Section label chevron | hover label 行才显示，紧跟文字右侧，点击收起/展开 |
-| 项目子项缩进 | 子对话图标从 40px，由 WorkspaceCollapse wrapper pl-30px + 子项自身 pl-10px = 40px |
-| 定时任务子项缩进 | 同上，CronJobSiderItem wrapper pl-30px + 子项自身 pl-10px = 40px |
-| ConversationRow selected 态 | bg-fill-3，无加粗，rd-8px |
-| 设置行权重 | 与新会话/定时任务相同：14px medium text-t-primary h-34px |
-| 所有 item hover/selected | 统一 bg-fill-3，不使用蓝色透明 primary 色 |
-| collapsed 侧边栏 | Logo 缩为 size-20px，item 只显示图标居中 |
-| 深色模式 | section label bg-fill-2 sticky 背景无穿透 |
+| 检查项                      | 预期效果                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| 品牌区 Logo 对齐            | Logo 黑块左边缘与「新会话」`+` 外框左边缘对齐（均从 10px 开始）                   |
+| 新会话文字对齐              | 「新」字与「定」字左对齐                                                          |
+| 所有 L1 item 图标对齐       | 团队/定时任务/对话行图标左边缘在同一垂直线                                        |
+| Section label chevron       | hover label 行才显示，紧跟文字右侧，点击收起/展开                                 |
+| 项目子项缩进                | 子对话图标从 40px，由 WorkspaceCollapse wrapper pl-30px + 子项自身 pl-10px = 40px |
+| 定时任务子项缩进            | 同上，CronJobSiderItem wrapper pl-30px + 子项自身 pl-10px = 40px                  |
+| ConversationRow selected 态 | bg-fill-3，无加粗，rd-8px                                                         |
+| 设置行权重                  | 与新会话/定时任务相同：14px medium text-t-primary h-34px                          |
+| 所有 item hover/selected    | 统一 bg-fill-3，不使用蓝色透明 primary 色                                         |
+| collapsed 侧边栏            | Logo 缩为 size-20px，item 只显示图标居中                                          |
+| 深色模式                    | section label bg-fill-2 sticky 背景无穿透                                         |
 
 ## 九、待定项
 

@@ -150,7 +150,7 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
       ) : (
         <div className='shrink-0 flex flex-col gap-2px'>
           <div
-            className='group/label flex items-center px-12px h-28px select-none sticky top-0 z-10 bg-2 mt-4px'
+            className='group/label sider-section-label flex items-center px-12px h-28px select-none sticky top-0 z-10 mt-4px'
             data-testid='team-section-toggle'
           >
             <span className='text-12px text-t-secondary font-normal leading-none'>{t('team.sider.title')}</span>
