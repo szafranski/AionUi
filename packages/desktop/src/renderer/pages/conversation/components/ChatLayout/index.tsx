@@ -335,10 +335,10 @@ const ChatLayout: React.FC<{
           <div
             className={classNames('!bg-1 relative chat-layout-right-sider layout-sider')}
             style={{
-              flexGrow: isPreviewOpen ? 0 : workspaceFlex,
+              flexGrow: rightSiderCollapsed ? 0 : workspaceFlex,
               flexShrink: 0,
-              flexBasis: rightSiderCollapsed ? '0px' : isPreviewOpen ? `${Math.round(workspaceWidthPx)}px` : 0,
-              width: rightSiderCollapsed ? '0px' : isPreviewOpen ? `${Math.round(workspaceWidthPx)}px` : undefined,
+              flexBasis: rightSiderCollapsed ? '0px' : `${Math.round(workspaceWidthPx)}px`,
+              width: rightSiderCollapsed ? '0px' : undefined,
               minWidth: rightSiderCollapsed ? '0px' : '220px',
               overflow: 'hidden',
               borderLeft: rightSiderCollapsed ? 'none' : '1px solid var(--bg-3)',
@@ -348,7 +348,7 @@ const ChatLayout: React.FC<{
               !rightSiderCollapsed &&
               createWorkspaceDragHandle({ className: 'absolute left-0 top-0 bottom-0', style: {}, reverse: true })}
             <WorkspacePanelHeader
-              showToggle={!isMacRuntime && !isWindowsRuntime}
+              showToggle={true}
               collapsed={rightSiderCollapsed}
               onToggle={() => dispatchWorkspaceToggleEvent()}
               togglePlacement={layout?.isMobile ? 'left' : 'right'}
