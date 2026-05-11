@@ -120,15 +120,11 @@ const WebuiModalContent: React.FC = () => {
         // as the Switch's checked value used to make the Switch look "on" when
         // the main-process auto-restore silently failed (port conflict, etc.),
         // so users clicked the saved URL and got a white screen because 25808
-        // was empty.
+        // was empty. The main process is the sole writer of this key — the
+        // start/stop IPC providers and restoreDesktopWebUIFromPreferences own
+        // reconciliation, so the renderer only reads `running` and never
+        // writes the flag back.
         setWebuiEnabled(statusData.running);
-
-        // Persisted preference disagrees with reality → reconcile the config
-        // so next launch's auto-restore matches what the user sees now.
-        const savedEnabled = configService.get(DESKTOP_WEBUI_ENABLED_KEY) === true;
-        if (savedEnabled !== statusData.running) {
-          void configService.set(DESKTOP_WEBUI_ENABLED_KEY, statusData.running);
-        }
 
         if (statusData.lanIP) {
           setCachedIP(statusData.lanIP);
