@@ -22,5 +22,21 @@
     "networkError": "連線失敗，請稍後再試",
     "serverError": "伺服器發生錯誤，請稍後再試",
     "unknown": "登入失敗，請稍後再試"
-  }
+  },
+  "welcome.getStarted": "開始使用",
+  "welcome.tos": "繼續即代表同意",
+  "welcome.tosLink": "服務條款",
+  "welcome.privacyLink": "隱私政策",
+  "welcome.tosAnd": "與",
+  "welcome.feature1": "內建 Agent，零配置開箱即用",
+  "welcome.feature2": "支援 Claude Code、Codex、Kiro 等 16+ Agent",
+  "welcome.feature3": "檔案讀寫 · 程式碼執行 · MCP 工具一體化",
+  "welcome.feature4": "手機遠端查看 · 24/7 定時自動化",
+  "signin.title": "登入 AionUi",
+  "signin.subtitle": "使用 Google 或 GitHub 帳號繼續",
+  "signin.continueGoogle": "使用 Google 登入",
+  "signin.continueGitHub": "使用 GitHub 登入",
+  "signin.newUserHint": "新用戶首次登入贈送試用額度。繼續即代表同意",
+  "signin.back": "← 返回",
+  "signin.error": "登入失敗，請重試"
 }

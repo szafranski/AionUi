@@ -22,5 +22,21 @@
     "networkError": "接続に失敗しました。後でもう一度お試しください",
     "serverError": "サーバーで問題が発生しました。しばらく待ってから再試行してください",
     "unknown": "ログインに失敗しました。後でもう一度お試しください"
-  }
+  },
+  "welcome.getStarted": "始める",
+  "welcome.tos": "続行することで同意したものとみなします",
+  "welcome.tosLink": "利用規約",
+  "welcome.privacyLink": "プライバシーポリシー",
+  "welcome.tosAnd": "と",
+  "welcome.feature1": "内蔵 Agent、ゼロ設定ですぐ使える",
+  "welcome.feature2": "Claude Code、Codex、Kiro など 16+ Agent に対応",
+  "welcome.feature3": "ファイル読み書き・コード実行・MCP ツール統合",
+  "welcome.feature4": "モバイルリモートビュー · 24/7 スケジュール自動化",
+  "signin.title": "AionUi にサインイン",
+  "signin.subtitle": "Google または GitHub アカウントで続ける",
+  "signin.continueGoogle": "Google で続ける",
+  "signin.continueGitHub": "GitHub で続ける",
+  "signin.newUserHint": "新規ユーザーには無料トライアルクレジットが付与されます。続行することで同意します",
+  "signin.back": "← 戻る",
+  "signin.error": "サインインに失敗しました。もう一度お試しください。"
 }

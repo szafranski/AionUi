@@ -142,9 +142,8 @@ const Main = () => {
     return null;
   }
 
-  const DevRemoteConsole = process.env.NODE_ENV === 'development'
-    ? React.lazy(() => import('./components/remote/DevRemoteConsole'))
-    : null;
+  const DevRemoteConsole =
+    process.env.NODE_ENV === 'development' ? React.lazy(() => import('./components/remote/DevRemoteConsole')) : null;
 
   return (
     <>

@@ -22,5 +22,21 @@
     "networkError": "Bağlantı başarısız, lütfen tekrar deneyin",
     "serverError": "Sunucu hatası, lütfen daha sonra tekrar deneyin",
     "unknown": "Giriş başarısız, lütfen tekrar deneyin"
-  }
+  },
+  "welcome.getStarted": "Başlayın",
+  "welcome.tos": "Devam ederek kabul etmiş olursunuz",
+  "welcome.tosLink": "Hizmet Şartları",
+  "welcome.privacyLink": "Gizlilik Politikası",
+  "welcome.tosAnd": "ve",
+  "welcome.feature1": "Dahili Agent, sıfır yapılandırma",
+  "welcome.feature2": "Claude Code, Codex, Kiro ve 16+ Agent destekler",
+  "welcome.feature3": "Dosya I/O · Kod yürütme · MCP araçları entegre",
+  "welcome.feature4": "Mobil uzaktan görüntüleme · 24/7 zamanlanmış otomasyon",
+  "signin.title": "AionUi'ya Giriş Yap",
+  "signin.subtitle": "Google veya GitHub hesabınızla devam edin",
+  "signin.continueGoogle": "Google ile devam et",
+  "signin.continueGitHub": "GitHub ile devam et",
+  "signin.newUserHint": "Yeni kullanıcılar ücretsiz deneme kredisi alır. Devam ederek kabul edersiniz",
+  "signin.back": "← Geri",
+  "signin.error": "Giriş başarısız. Lütfen tekrar deneyin."
 }

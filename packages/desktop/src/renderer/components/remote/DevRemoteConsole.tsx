@@ -16,7 +16,6 @@ import { remoteMockStore } from '@renderer/services/remoteMock';
 
 const STATES: RemoteState[] = ['INACTIVE', 'ACTIVE', 'OFFLINE'];
 
-
 const STATE_COLORS: Record<RemoteState, string> = {
   GUEST: '#888',
   INACTIVE: '#5b8af0',
@@ -68,7 +67,16 @@ const DevRemoteConsole: React.FC = () => {
         style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: collapsed ? 0 : 8, cursor: 'pointer' }}
         onClick={() => setCollapsed((v) => !v)}
       >
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATE_COLORS[state], display: 'inline-block', flexShrink: 0 }} />
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: STATE_COLORS[state],
+            display: 'inline-block',
+            flexShrink: 0,
+          }}
+        />
         <span style={{ color: '#fff', fontWeight: 600 }}>Remote</span>
         <span style={{ color: STATE_COLORS[state], marginLeft: 2 }}>{state}</span>
         <span style={{ marginLeft: 'auto', color: '#666', fontSize: 10 }}>{collapsed ? '▲' : '▼'}</span>
@@ -101,7 +109,10 @@ const DevRemoteConsole: React.FC = () => {
           <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
           <button
             type='button'
-            onClick={() => { devSetState('GUEST'); void logout(); }}
+            onClick={() => {
+              devSetState('GUEST');
+              void logout();
+            }}
             style={{
               background: 'transparent',
               border: '1px solid rgba(255,255,255,0.1)',

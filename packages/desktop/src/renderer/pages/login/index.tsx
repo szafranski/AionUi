@@ -1,15 +1,28 @@
 import loginLogo from '@renderer/assets/logos/brand/app.png';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '../../hooks/context/AuthContext';
 import './LoginPage.css';
 
 const GoogleIcon: React.FC = () => (
   <svg width='20' height='20' viewBox='0 0 48 48' style={{ flexShrink: 0 }}>
-    <path fill='#EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.26 17.74 9.5 24 9.5z' />
-    <path fill='#4285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z' />
-    <path fill='#FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z' />
-    <path fill='#34A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-3.76-13.47-9.09l-7.98 6.19C6.51 42.62 14.62 48 24 48z' />
+    <path
+      fill='#EA4335'
+      d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.26 17.74 9.5 24 9.5z'
+    />
+    <path
+      fill='#4285F4'
+      d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'
+    />
+    <path
+      fill='#FBBC05'
+      d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'
+    />
+    <path
+      fill='#34A853'
+      d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-3.76-13.47-9.09l-7.98 6.19C6.51 42.62 14.62 48 24 48z'
+    />
   </svg>
 );
 
@@ -19,28 +32,30 @@ const GitHubIcon: React.FC = () => (
   </svg>
 );
 
-const FEATURES = [
-  { icon: '⚡', title: '内置 Agent，零配置开箱即用' },
-  { icon: '🤖', title: '支持 Claude Code、Codex、Kiro 等 16+ Agent' },
-  { icon: '🗂️', title: '文件读写 · 代码执行 · MCP 工具一体化' },
-  { icon: '📱', title: '手机远程查看 · 24/7 定时自动化' },
-];
-
 type Step = 'welcome' | 'signin';
 
 const LoginPage: React.FC = () => {
+  const { t } = useTranslation('login');
   const { status, login } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
   const [error, setError] = useState<string | null>(null);
   const didLoginRef = useRef(false);
 
+  const features = [
+    { icon: '⚡', title: t('welcome.feature1') },
+    { icon: '🤖', title: t('welcome.feature2') },
+    { icon: '🗂️', title: t('welcome.feature3') },
+    { icon: '📱', title: t('welcome.feature4') },
+  ];
+
   useEffect(() => {
     document.body.classList.add('login-page-active');
-    return () => { document.body.classList.remove('login-page-active'); };
+    return () => {
+      document.body.classList.remove('login-page-active');
+    };
   }, []);
 
   useEffect(() => {
-    // 只在用户主动登录后跳转，忽略页面初始就是 authenticated 的情况
     if (status === 'authenticated' && didLoginRef.current) {
       window.location.hash = '/guid';
     }
@@ -52,10 +67,10 @@ const LoginPage: React.FC = () => {
     void login({ username: 'demo', password: 'demo', remember: false }).then((result) => {
       if (!result.success) {
         didLoginRef.current = false;
-        setError('登录失败，请重试');
+        setError(t('signin.error'));
       }
     });
-  }, [login]);
+  }, [login, t]);
 
   if (status === 'checking') return <AppLoader />;
 
@@ -65,7 +80,6 @@ const LoginPage: React.FC = () => {
       {step === 'welcome' && (
         <div className='lp-welcome'>
           <div className='lp-welcome-inner'>
-            {/* Logo + 标题 */}
             <div className='lp-hero'>
               <div className='lp-hero-logo'>
                 <img src={loginLogo} alt='AionUi' />
@@ -73,9 +87,8 @@ const LoginPage: React.FC = () => {
               <h1 className='lp-hero-title'>AionUi</h1>
             </div>
 
-            {/* 功能列表 */}
             <div className='lp-features'>
-              {FEATURES.map((f) => (
+              {features.map((f) => (
                 <div key={f.title} className='lp-feature-item'>
                   <span className='lp-feature-icon'>{f.icon}</span>
                   <div className='lp-feature-title'>{f.title}</div>
@@ -83,15 +96,18 @@ const LoginPage: React.FC = () => {
               ))}
             </div>
 
-            {/* CTA */}
             <button type='button' className='lp-btn-primary' onClick={() => setStep('signin')}>
-              开始使用
+              {t('welcome.getStarted')}
             </button>
             <p className='lp-tos-welcome'>
-              继续即代表同意{' '}
-              <a href='#' className='lp-tos-link'>服务协议</a>
-              {' '}与{' '}
-              <a href='#' className='lp-tos-link'>隐私政策</a>
+              {t('welcome.tos')}{' '}
+              <a href='#' className='lp-tos-link'>
+                {t('welcome.tosLink')}
+              </a>{' '}
+              {t('welcome.tosAnd')}{' '}
+              <a href='#' className='lp-tos-link'>
+                {t('welcome.privacyLink')}
+              </a>
             </p>
           </div>
         </div>
@@ -102,33 +118,38 @@ const LoginPage: React.FC = () => {
         <div className='lp-signin'>
           <div className='lp-signin-card'>
             <button type='button' className='lp-back' onClick={() => setStep('welcome')}>
-              ← 返回
+              {t('signin.back')}
             </button>
 
             <div className='lp-signin-logo' style={{ marginTop: 16 }}>
               <img src={loginLogo} alt='AionUi' />
             </div>
-            <h2 className='lp-signin-title'>Sign in to AionUi</h2>
-            <p className='lp-signin-sub'>使用 Google 或 GitHub 账号继续</p>
+            <h2 className='lp-signin-title'>{t('signin.title')}</h2>
+            <p className='lp-signin-sub'>{t('signin.subtitle')}</p>
 
             <div className='lp-signin-btns'>
               <button type='button' className='lp-oauth-btn' onClick={handleSignIn}>
                 <GoogleIcon />
-                <span>Continue with Google</span>
+                <span>{t('signin.continueGoogle')}</span>
               </button>
               <button type='button' className='lp-oauth-btn' onClick={handleSignIn}>
                 <GitHubIcon />
-                <span>Continue with GitHub</span>
+                <span>{t('signin.continueGitHub')}</span>
               </button>
             </div>
 
             {error && <p className='lp-error'>{error}</p>}
 
             <p className='lp-tos'>
-              新用户首次登录赠送试用额度。继续即代表同意{' '}
-              <a href='#' className='lp-tos-link'>服务协议</a>
-              {' '}与{' '}
-              <a href='#' className='lp-tos-link'>隐私政策</a>。
+              {t('signin.newUserHint')}{' '}
+              <a href='#' className='lp-tos-link'>
+                {t('welcome.tosLink')}
+              </a>{' '}
+              {t('welcome.tosAnd')}{' '}
+              <a href='#' className='lp-tos-link'>
+                {t('welcome.privacyLink')}
+              </a>
+              。
             </p>
           </div>
         </div>

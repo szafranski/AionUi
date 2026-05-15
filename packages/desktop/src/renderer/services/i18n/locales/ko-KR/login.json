@@ -22,5 +22,21 @@
     "networkError": "연결 실패, 다시 시도하세요",
     "serverError": "서버 오류, 나중에 다시 시도하세요",
     "unknown": "로그인 실패, 다시 시도하세요"
-  }
+  },
+  "welcome.getStarted": "시작하기",
+  "welcome.tos": "계속하면 동의하는 것으로 간주합니다",
+  "welcome.tosLink": "서비스 약관",
+  "welcome.privacyLink": "개인정보 처리방침",
+  "welcome.tosAnd": "및",
+  "welcome.feature1": "내장 Agent, 설정 없이 바로 사용",
+  "welcome.feature2": "Claude Code, Codex, Kiro 등 16+ Agent 지원",
+  "welcome.feature3": "파일 읽기/쓰기 · 코드 실행 · MCP 도구 통합",
+  "welcome.feature4": "모바일 원격 보기 · 24/7 예약 자동화",
+  "signin.title": "AionUi에 로그인",
+  "signin.subtitle": "Google 또는 GitHub 계정으로 계속",
+  "signin.continueGoogle": "Google로 계속",
+  "signin.continueGitHub": "GitHub로 계속",
+  "signin.newUserHint": "새 사용자는 무료 체험 크레딧을 받습니다. 계속하면 동의합니다",
+  "signin.back": "← 뒤로",
+  "signin.error": "로그인에 실패했습니다. 다시 시도해 주세요."
 }

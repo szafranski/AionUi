@@ -22,5 +22,21 @@
     "networkError": "Connection failed, please try again",
     "serverError": "Server error, please try again later",
     "unknown": "Sign-in failed, please try again"
-  }
+  },
+  "welcome.getStarted": "Get Started",
+  "welcome.tos": "By continuing, you agree to our",
+  "welcome.tosLink": "Terms of Service",
+  "welcome.privacyLink": "Privacy Policy",
+  "welcome.tosAnd": "and",
+  "welcome.feature1": "Built-in Agent, zero-config out of the box",
+  "welcome.feature2": "Supports Claude Code, Codex, Kiro and 16+ more Agents",
+  "welcome.feature3": "File I/O · Code execution · MCP tools unified",
+  "welcome.feature4": "Mobile remote view · 24/7 scheduled automation",
+  "signin.title": "Sign in to AionUi",
+  "signin.subtitle": "Continue with your Google or GitHub account",
+  "signin.continueGoogle": "Continue with Google",
+  "signin.continueGitHub": "Continue with GitHub",
+  "signin.newUserHint": "New users get free trial credits. By continuing, you agree to our",
+  "signin.back": "← Back",
+  "signin.error": "Sign in failed. Please try again."
 }

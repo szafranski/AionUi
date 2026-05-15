@@ -59,8 +59,6 @@ const GROUP_HEADER_BEFORE: Record<string, string> = {
   about: 'settings.groupAbout',
 };
 
-
-
 type SiderItem = {
   id: string;
   label: string;

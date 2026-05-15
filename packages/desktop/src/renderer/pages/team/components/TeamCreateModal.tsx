@@ -50,9 +50,7 @@ const AgentListItem: React.FC<{
     </div>
     <div
       className={`flex h-20px w-20px flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-        isSelected
-          ? 'border-primary-6 bg-primary-6'
-          : 'border-border-2 bg-transparent'
+        isSelected ? 'border-primary-6 bg-primary-6' : 'border-border-2 bg-transparent'
       }`}
     >
       {isSelected && (

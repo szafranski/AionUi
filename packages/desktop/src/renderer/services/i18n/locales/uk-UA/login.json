@@ -22,5 +22,21 @@
     "networkError": "Помилка з'єднання, будь ласка, спробуйте ще раз",
     "serverError": "Помилка сервера, будь ласка, спробуйте пізніше",
     "unknown": "Помилка входу, будь ласка, спробуйте ще раз"
-  }
+  },
+  "welcome.getStarted": "Почати",
+  "welcome.tos": "Продовжуючи, ви погоджуєтесь з",
+  "welcome.tosLink": "Умовами використання",
+  "welcome.privacyLink": "Політикою конфіденційності",
+  "welcome.tosAnd": "та",
+  "welcome.feature1": "Вбудований Agent, нульова конфігурація",
+  "welcome.feature2": "Підтримка Claude Code, Codex, Kiro та 16+ Agent",
+  "welcome.feature3": "Файлові операції · Виконання коду · MCP інструменти",
+  "welcome.feature4": "Мобільний віддалений перегляд · Автоматизація 24/7",
+  "signin.title": "Увійти до AionUi",
+  "signin.subtitle": "Продовжити з обліковим записом Google або GitHub",
+  "signin.continueGoogle": "Продовжити з Google",
+  "signin.continueGitHub": "Продовжити з GitHub",
+  "signin.newUserHint": "Нові користувачі отримують безкоштовні кредити. Продовжуючи, ви погоджуєтесь",
+  "signin.back": "← Назад",
+  "signin.error": "Помилка входу. Будь ласка, спробуйте ще раз."
 }

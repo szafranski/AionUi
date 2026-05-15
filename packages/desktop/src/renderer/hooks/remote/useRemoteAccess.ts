@@ -34,12 +34,9 @@ export function useRemoteAccess(): RemoteAccess {
     return remoteMockStore.subscribe(setMockSnap);
   }, []);
 
-  const devSetState = useCallback(
-    (s: RemoteState) => {
-      if (IS_DEV) remoteMockStore.setState(s);
-    },
-    []
-  );
+  const devSetState = useCallback((s: RemoteState) => {
+    if (IS_DEV) remoteMockStore.setState(s);
+  }, []);
 
   // ── real state ──
   const { user, status: authStatus } = useAuth();

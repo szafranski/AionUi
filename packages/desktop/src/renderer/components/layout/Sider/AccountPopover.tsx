@@ -43,7 +43,9 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, right, onClick, danger
     onClick={onClick}
     className={`flex items-center gap-10px w-full px-8px h-36px rd-8px border-none bg-transparent cursor-pointer transition-colors active:bg-fill-3 ${danger ? 'text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_12%,transparent)]' : 'text-t-primary hover:bg-fill-2'}`}
   >
-    <span className={`size-20px inline-flex items-center justify-center shrink-0 ${danger ? 'text-[var(--danger)]' : 'text-t-secondary'}`}>
+    <span
+      className={`size-20px inline-flex items-center justify-center shrink-0 ${danger ? 'text-[var(--danger)]' : 'text-t-secondary'}`}
+    >
       {icon}
     </span>
     <span className='flex-1 text-left text-13px'>{label}</span>
@@ -94,7 +96,16 @@ const AccountPopover: React.FC<Props> = ({ onClose }) => {
           <div className='text-13px font-500 text-t-primary truncate'>{username ?? 'Aion User'}</div>
           {dot.label && (
             <div className='flex items-center gap-5px mt-2px'>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot.color, flexShrink: 0, display: 'inline-block' }} />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: dot.color,
+                  flexShrink: 0,
+                  display: 'inline-block',
+                }}
+              />
               <span className='text-12px text-t-tertiary'>{dot.label}</span>
             </div>
           )}
@@ -110,7 +121,16 @@ const AccountPopover: React.FC<Props> = ({ onClose }) => {
           label='远程连接'
           right={
             <div className='flex items-center gap-6px shrink-0'>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot.color, display: 'inline-block', flexShrink: 0 }} />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: dot.color,
+                  display: 'inline-block',
+                  flexShrink: 0,
+                }}
+              />
               <span className='text-12px text-t-secondary'>{REMOTE_LABEL[state]}</span>
               <span className='text-13px text-t-secondary'>›</span>
             </div>
@@ -133,7 +153,9 @@ const AccountPopover: React.FC<Props> = ({ onClose }) => {
           icon={<ThemeIcon theme='outline' size={18} fill='currentColor' />}
           label='主题'
           right={<span className='text-12px text-t-secondary'>{themeLabel}</span>}
-          onClick={() => { void setTheme(theme === 'dark' ? 'light' : 'dark'); }}
+          onClick={() => {
+            void setTheme(theme === 'dark' ? 'light' : 'dark');
+          }}
         />
       </div>
 

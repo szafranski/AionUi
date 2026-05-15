@@ -100,10 +100,18 @@ function CodeBlock(props: CodeBlockProps) {
   const handleCopy = () => {
     void copyText(formattedContent)
       .then(() => {
-        try { Message.success(t('common.copySuccess')); } catch { /* Shadow DOM portal may fail silently */ }
+        try {
+          Message.success(t('common.copySuccess'));
+        } catch {
+          /* Shadow DOM portal may fail silently */
+        }
       })
       .catch(() => {
-        try { Message.error(t('common.copyFailed')); } catch { /* ignore */ }
+        try {
+          Message.error(t('common.copyFailed'));
+        } catch {
+          /* ignore */
+        }
       });
   };
 

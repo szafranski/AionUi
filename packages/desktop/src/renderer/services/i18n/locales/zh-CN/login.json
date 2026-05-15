@@ -22,5 +22,21 @@
     "networkError": "连接失败，请稍后重试",
     "serverError": "服务器开小差了，请稍后重试",
     "unknown": "登录失败，请稍后再试"
-  }
+  },
+  "welcome.getStarted": "开始使用",
+  "welcome.tos": "继续即代表同意",
+  "welcome.tosLink": "服务协议",
+  "welcome.privacyLink": "隐私政策",
+  "welcome.tosAnd": "与",
+  "welcome.feature1": "内置 Agent，零配置开箱即用",
+  "welcome.feature2": "支持 Claude Code、Codex、Kiro 等 16+ Agent",
+  "welcome.feature3": "文件读写 · 代码执行 · MCP 工具一体化",
+  "welcome.feature4": "手机远程查看 · 24/7 定时自动化",
+  "signin.title": "登录到 AionUi",
+  "signin.subtitle": "使用 Google 或 GitHub 账号继续",
+  "signin.continueGoogle": "使用 Google 登录",
+  "signin.continueGitHub": "使用 GitHub 登录",
+  "signin.newUserHint": "新用户首次登录赠送试用额度。继续即代表同意",
+  "signin.back": "← 返回",
+  "signin.error": "登录失败，请重试"
 }

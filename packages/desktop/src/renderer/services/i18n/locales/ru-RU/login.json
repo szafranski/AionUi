@@ -22,5 +22,21 @@
     "networkError": "Ошибка подключения, попробуйте снова",
     "serverError": "Ошибка сервера, попробуйте позже",
     "unknown": "Ошибка входа, попробуйте снова"
-  }
+  },
+  "welcome.getStarted": "Начать",
+  "welcome.tos": "Продолжая, вы соглашаетесь с",
+  "welcome.tosLink": "Условиями использования",
+  "welcome.privacyLink": "Политикой конфиденциальности",
+  "welcome.tosAnd": "и",
+  "welcome.feature1": "Встроенный Agent, нулевая настройка",
+  "welcome.feature2": "Поддержка Claude Code, Codex, Kiro и 16+ Agent",
+  "welcome.feature3": "Файловые операции · Выполнение кода · MCP инструменты",
+  "welcome.feature4": "Мобильный удалённый просмотр · Автоматизация 24/7",
+  "signin.title": "Войти в AionUi",
+  "signin.subtitle": "Продолжить с аккаунтом Google или GitHub",
+  "signin.continueGoogle": "Продолжить с Google",
+  "signin.continueGitHub": "Продолжить с GitHub",
+  "signin.newUserHint": "Новые пользователи получают бесплатные кредиты. Продолжая, вы соглашаетесь",
+  "signin.back": "← Назад",
+  "signin.error": "Ошибка входа. Пожалуйста, попробуйте ещё раз."
 }

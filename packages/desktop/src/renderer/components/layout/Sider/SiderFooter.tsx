@@ -10,7 +10,7 @@ import { Tooltip, Trigger } from '@arco-design/web-react';
 import { ArrowCircleLeft, Moon, SunOne } from '@icon-park/react';
 import classNames from 'classnames';
 import type { SiderTooltipProps } from '@renderer/utils/ui/siderTooltip';
-import { useRemoteAccess, type RemoteState } from '@renderer/hooks/remote/useRemoteAccess';
+import { useRemoteAccess } from '@renderer/hooks/remote/useRemoteAccess';
 import AccountPopover from './AccountPopover';
 
 interface SiderFooterProps {
@@ -27,15 +27,6 @@ interface SiderFooterProps {
   onLogoutClick?: () => void;
 }
 
-type DotState = { bg: string; label: string };
-
-const DOT_STATES: Record<RemoteState, DotState> = {
-  GUEST: { bg: 'var(--color-text-4)', label: '点此登录' },
-  ACTIVE: { bg: 'rgb(var(--success-6))', label: '远程已连接' },
-  INACTIVE: { bg: 'var(--color-text-4)', label: '远程未开启' },
-  OFFLINE: { bg: 'rgb(var(--warning-6))', label: '中继断开' },
-};
-
 const SiderFooter: React.FC<SiderFooterProps> = ({
   isMobile,
   isSettings,
@@ -46,10 +37,9 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
   onThemeToggle,
 }) => {
   const { t } = useTranslation();
-  const { state, username } = useRemoteAccess();
+  const { username } = useRemoteAccess();
   const [popoverVisible, setPopoverVisible] = useState(false);
 
-  const dot = DOT_STATES[state];
   const showThemeToggle = isSettings && !collapsed;
   const themeTooltip = theme === 'dark' ? t('settings.lightMode') : t('settings.darkMode');
 
@@ -62,7 +52,6 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
 
   return (
     <div className='shrink-0 sider-footer mt-auto pt-8px pb-8px border-t border-solid border-[var(--color-border-2)] border-l-0 border-r-0 border-b-0'>
-
       {/* 对话页：整行账号区，点击弹菜单 */}
       {!isSettings && (
         <Trigger
@@ -94,22 +83,9 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
                 lineHeight: 1,
                 background: 'linear-gradient(135deg, #7583b2, rgb(var(--primary-6)))',
                 color: '#fff',
-                position: 'relative',
               }}
             >
               {avatarInitial}
-              <span
-                style={{
-                  position: 'absolute',
-                  right: -1,
-                  bottom: -1,
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  border: '1.5px solid var(--color-bg-1)',
-                  background: dot.bg,
-                }}
-              />
             </span>
 
             {/* 文字区 */}
@@ -119,7 +95,13 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
                 <span className='text-12px text-t-tertiary shrink-0'>·</span>
                 <span className='text-12px text-t-tertiary shrink-0'>Aion</span>
                 <svg className='shrink-0 text-t-tertiary' width='12' height='12' viewBox='0 0 48 48' fill='none'>
-                  <path d='M12 20l12 12 12-12' stroke='currentColor' strokeWidth='4' strokeLinecap='round' strokeLinejoin='round' />
+                  <path
+                    d='M12 20l12 12 12-12'
+                    stroke='currentColor'
+                    strokeWidth='4'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
               </div>
             )}
@@ -140,9 +122,17 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
               )}
             >
               <span className='size-22px flex items-center justify-center shrink-0 text-t-secondary'>
-                <ArrowCircleLeft theme='outline' size='16' fill='currentColor' className='block leading-none' style={{ lineHeight: 0 }} />
+                <ArrowCircleLeft
+                  theme='outline'
+                  size='16'
+                  fill='currentColor'
+                  className='block leading-none'
+                  style={{ lineHeight: 0 }}
+                />
               </span>
-              <span className='collapsed-hidden text-t-primary text-14px font-[500] leading-24px truncate'>{t('common.back')}</span>
+              <span className='collapsed-hidden text-t-primary text-14px font-[500] leading-24px truncate'>
+                {t('common.back')}
+              </span>
             </div>
           </Tooltip>
           {showThemeToggle && (
