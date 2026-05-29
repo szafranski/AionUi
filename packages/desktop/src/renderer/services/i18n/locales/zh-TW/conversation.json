@@ -135,6 +135,10 @@
         "title": "應用處理失敗",
         "body": "本次請求在應用程式處理過程中失敗。請先重試一次；如果仍然出現，可以提交回饋。"
       },
+      "AIONUI_CONVERSATION_BUSY": {
+        "title": "會話正在處理上一則訊息",
+        "body": "目前會話還有回覆尚未結束。請等待本次回覆完成後再傳送新的訊息。"
+      },
       "USER_AGENT_NOT_INSTALLED": {
         "title": "所選 Agent 未安裝",
         "body": "請先安裝該 Agent 依賴的 CLI 或應用程式，然後在設定中重新連線。"
@@ -163,6 +167,34 @@
         "title": "所選 Agent 拒絕了請求",
         "body": "Agent 認為請求格式無效。可以簡化訊息內容，或切換到其他 Agent。"
       },
+      "USER_AGENT_HANDSHAKE_FAILED": {
+        "title": "Agent 握手失敗",
+        "body": "所選 Agent 未能完成啟動握手。請重新啟動或重新連線該 Agent 後重試。"
+      },
+      "USER_AGENT_HANDSHAKE_TIMEOUT": {
+        "title": "Agent 握手逾時",
+        "body": "所選 Agent 未在預期時間內完成啟動握手。請確認它沒有卡在啟動或登入流程中，然後重試。"
+      },
+      "USER_AGENT_ACP_INIT_FAILED": {
+        "title": "Agent 協議初始化失敗",
+        "body": "應用程式無法和該 Agent 初始化 Agent Client Protocol 會話。請檢查 Agent 版本並重新連線。"
+      },
+      "USER_AGENT_PROTOCOL_MISMATCH": {
+        "title": "Agent 協議版本不相容",
+        "body": "所選 Agent 使用的協議版本不相容。請升級 Agent，或切換到相容的 Agent。"
+      },
+      "USER_AGENT_NO_PREVIOUS_SESSION": {
+        "title": "無法恢復上一次 Agent 會話",
+        "body": "Agent 無法恢復之前的會話狀態。請建立新對話後繼續。"
+      },
+      "USER_AGENT_COMMAND_NOT_FOUND": {
+        "title": "找不到 Agent 命令",
+        "body": "未找到已設定的 Agent 命令。請先安裝該命令，或在設定中更新命令路徑。"
+      },
+      "USER_AGENT_MISSING_ENV": {
+        "title": "Agent 缺少必要環境變數",
+        "body": "該 Agent 需要的環境變數尚未設定。請在設定或 shell 環境中補齊後重新連線。"
+      },
       "USER_LLM_PROVIDER_AUTH_FAILED": {
         "title": "模型服務商驗證失敗",
         "body": "所選服務商拒絕了 API Key 或帳號憑證。請檢查模型設定後重試。"
@@ -190,6 +222,38 @@
       "USER_LLM_PROVIDER_GATEWAY_ERROR": {
         "title": "模型服務商暫不可用",
         "body": "服務商返回了閘道或服務異常。請稍後重試，或切換到其他服務商。"
+      },
+      "USER_LLM_PROVIDER_PERMISSION_DENIED": {
+        "title": "模型服務商無權處理請求",
+        "body": "目前服務商帳號沒有使用該模型或執行該操作的權限。請檢查帳號權限，或切換其他模型。"
+      },
+      "USER_LLM_PROVIDER_BILLING_REQUIRED": {
+        "title": "模型服務商需要啟用計費",
+        "body": "所選服務商需要有效的計費、餘額或額度後才能完成請求。請處理後重試。"
+      },
+      "USER_LLM_PROVIDER_UNSUPPORTED_MODEL": {
+        "title": "模型不支援本次請求",
+        "body": "所選模型不可用，或不支援本次請求所需能力。請切換到受支援的模型後重試。"
+      },
+      "USER_LLM_PROVIDER_ENDPOINT_NOT_FOUND": {
+        "title": "找不到模型服務商介面",
+        "body": "服務商介面或 API 路徑不存在。請檢查 Base URL、部署名稱和 API 相容性。"
+      },
+      "USER_LLM_PROVIDER_INVALID_REQUEST": {
+        "title": "模型服務商拒絕了請求",
+        "body": "服務商認為本次請求無效。請簡化訊息內容，或檢查模型和服務商設定。"
+      },
+      "USER_LLM_PROVIDER_INVALID_TOOL_SCHEMA": {
+        "title": "模型服務商拒絕了工具定義",
+        "body": "服務商拒絕了本次請求中的工具定義。請更新 Agent，或停用不相容的工具後重試。"
+      },
+      "USER_LLM_PROVIDER_CONTEXT_TOO_LARGE": {
+        "title": "上下文超出模型限制",
+        "body": "本次請求超出了模型上下文限制。請減少訊息內容、引用檔案或對話歷史後重試。"
+      },
+      "USER_LLM_PROVIDER_EMPTY_RESPONSE": {
+        "title": "模型服務商返回了空回應",
+        "body": "服務商完成了請求，但沒有返回可用內容。請先重試一次；如果反覆出現，可切換服務商。"
       },
       "UNKNOWN_UPSTREAM_ERROR": {
         "title": "上游 Agent 或模型服務商出錯",

@@ -14,8 +14,33 @@ import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+const enConversation = JSON.parse(
+  readFileSync(
+    path.join(process.cwd(), 'packages/desktop/src/renderer/services/i18n/locales/en-US/conversation.json'),
+    'utf8'
+  )
+);
+
+const resolveConversationKey = (key: string): unknown => {
+  if (!key.startsWith('conversation.')) return undefined;
+
+  return key
+    .replace(/^conversation\./, '')
+    .split('.')
+    .reduce<unknown>((current, part) => {
+      if (!current || typeof current !== 'object') return undefined;
+      return (current as Record<string, unknown>)[part];
+    }, enConversation);
+};
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (k: string) => k, i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => {
+      const value = resolveConversationKey(key);
+      return typeof value === 'string' ? value : (options?.defaultValue ?? key);
+    },
+    i18n: { language: 'en' },
+  }),
 }));
 
 const openFeedbackMock = vi.fn(() => Promise.resolve());
@@ -36,6 +61,25 @@ vi.mock('@renderer/components/Markdown', () => ({
 
 import MessageTips from '@/renderer/pages/conversation/Messages/components/MessageTips';
 import type { AgentStreamErrorInfo, IMessageTips } from '@/common/chat/chatLib';
+
+const requiredAgentErrorCodes = [
+  'AIONUI_CONVERSATION_BUSY',
+  'USER_AGENT_HANDSHAKE_FAILED',
+  'USER_AGENT_HANDSHAKE_TIMEOUT',
+  'USER_AGENT_ACP_INIT_FAILED',
+  'USER_AGENT_PROTOCOL_MISMATCH',
+  'USER_AGENT_NO_PREVIOUS_SESSION',
+  'USER_AGENT_COMMAND_NOT_FOUND',
+  'USER_AGENT_MISSING_ENV',
+  'USER_LLM_PROVIDER_PERMISSION_DENIED',
+  'USER_LLM_PROVIDER_BILLING_REQUIRED',
+  'USER_LLM_PROVIDER_UNSUPPORTED_MODEL',
+  'USER_LLM_PROVIDER_ENDPOINT_NOT_FOUND',
+  'USER_LLM_PROVIDER_INVALID_REQUEST',
+  'USER_LLM_PROVIDER_INVALID_TOOL_SCHEMA',
+  'USER_LLM_PROVIDER_CONTEXT_TOO_LARGE',
+  'USER_LLM_PROVIDER_EMPTY_RESPONSE',
+] as const;
 
 const buildTips = (
   type: IMessageTips['content']['type'],
@@ -115,10 +159,10 @@ describe('MessageTips — FeedbackButton wiring', () => {
       />
     );
 
-    expect(screen.getByText('conversation.agentError.codes.USER_LLM_PROVIDER_AUTH_FAILED.title')).toBeInTheDocument();
-    expect(screen.getByText('conversation.agentError.codes.USER_LLM_PROVIDER_AUTH_FAILED.body')).toBeInTheDocument();
-    expect(screen.getByText('conversation.agentError.ownership.user_llm_provider')).toBeInTheDocument();
-    expect(screen.getByText('conversation.agentError.notRetryable')).toBeInTheDocument();
+    expect(screen.getByText('Model provider authentication failed')).toBeInTheDocument();
+    expect(screen.getByText(/rejected the API key or account credentials/)).toBeInTheDocument();
+    expect(screen.getByText('Model provider')).toBeInTheDocument();
+    expect(screen.getByText('Needs configuration')).toBeInTheDocument();
     expect(screen.getByText('settings.oneClickFeedback')).toBeInTheDocument();
   });
 
@@ -127,7 +171,7 @@ describe('MessageTips — FeedbackButton wiring', () => {
       <MessageTips
         message={buildTips('error', 'raw provider billing error', {
           message: 'raw provider billing error',
-          code: 'USER_LLM_PROVIDER_BILLING_LIMIT',
+          code: 'USER_LLM_PROVIDER_BILLING_REQUIRED',
           ownership: 'user_llm_provider',
           detail: 'Provider billing limit exceeded.',
           retryable: false,
@@ -140,7 +184,26 @@ describe('MessageTips — FeedbackButton wiring', () => {
       />
     );
 
-    expect(screen.getByText('conversation.agentError.resolution.check_provider_billing')).toBeInTheDocument();
+    expect(screen.getByText('Check the model provider balance, credits, or quota.')).toBeInTheDocument();
+  });
+
+  it('renders billing-required provider errors from i18n instead of backend fallback text', () => {
+    render(
+      <MessageTips
+        message={buildTips('error', 'backend billing required fallback', {
+          message: 'backend billing required fallback',
+          code: 'USER_LLM_PROVIDER_BILLING_REQUIRED',
+          ownership: 'user_llm_provider',
+          detail: 'Provider billing check failed.',
+          retryable: false,
+          feedback_recommended: false,
+        })}
+      />
+    );
+
+    expect(screen.getByText('Model provider billing is required')).toBeInTheDocument();
+    expect(screen.getByText(/needs active billing, credits, or quota/)).toBeInTheDocument();
+    expect(screen.queryByText('backend billing required fallback')).not.toBeInTheDocument();
   });
 
   it('expands classified error technical details explicitly', async () => {
@@ -169,6 +232,22 @@ describe('MessageTips — FeedbackButton wiring', () => {
 });
 
 describe('agent error locale copy', () => {
+  it('defines title and body copy for newly classified agent error codes in every locale', () => {
+    const localeDir = path.join(process.cwd(), 'packages/desktop/src/renderer/services/i18n/locales');
+    const localeNames = ['zh-CN', 'en-US', 'ja-JP', 'zh-TW', 'ko-KR', 'tr-TR', 'ru-RU', 'uk-UA'];
+
+    for (const localeName of localeNames) {
+      const locale = JSON.parse(readFileSync(path.join(localeDir, localeName, 'conversation.json'), 'utf8'));
+
+      for (const code of requiredAgentErrorCodes) {
+        expect(locale.agentError.codes[code]?.title, `${localeName} ${code} title`).toEqual(expect.any(String));
+        expect(locale.agentError.codes[code]?.title.trim(), `${localeName} ${code} title`).not.toBe('');
+        expect(locale.agentError.codes[code]?.body, `${localeName} ${code} body`).toEqual(expect.any(String));
+        expect(locale.agentError.codes[code]?.body.trim(), `${localeName} ${code} body`).not.toBe('');
+      }
+    }
+  });
+
   it('does not label app-side errors as direct AionUi ownership', () => {
     const localeDir = path.join(process.cwd(), 'packages/desktop/src/renderer/services/i18n/locales');
     const localeNames = ['zh-CN', 'en-US', 'ja-JP', 'zh-TW', 'ko-KR', 'tr-TR', 'ru-RU', 'uk-UA'];
