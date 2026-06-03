@@ -962,19 +962,5 @@
     "pendingCancel": "取消",
     "pendingTimeRemaining": "剩餘時間：{{time}}"
   },
-  "retry": "重試",
-  "runtimeRetryConnectionTest": "重試檢測",
-  "runtimeStatus": {
-    "waitingForLock": "正在等待其他任務完成執行環境準備。",
-    "downloading": "正在下載託管 Node 執行環境。",
-    "extracting": "正在解壓託管 Node 執行環境。",
-    "validating": "正在校驗託管 Node 執行環境。",
-    "ready": "託管 Node 執行環境已就緒。",
-    "failedTimeout": "託管 Node 執行環境準備逾時，請重試。",
-    "failedDownload": "託管 Node 執行環境下載失敗，請檢查網路後重試。",
-    "failedHttp": "託管 Node 執行環境下載失敗（HTTP {{status}}）。",
-    "failedValidation": "託管 Node 執行環境校驗失敗，請重試。",
-    "failedUnsupported": "目前平台暫不支援託管 Node 執行環境。",
-    "failedUnknown": "託管 Node 執行環境準備失敗，請重試。"
-  }
+  "retry": "重試"
 }

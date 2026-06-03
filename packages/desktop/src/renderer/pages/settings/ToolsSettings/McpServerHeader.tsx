@@ -5,8 +5,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { McpOAuthStatus } from '@/renderer/hooks/mcp/useMcpOAuth';
 import FeedbackButton from '@/renderer/components/base/FeedbackButton';
-import { useRuntimeStatus, isRuntimeActivePhase } from '@/renderer/runtime/runtimeStatusStore';
-import { formatRuntimeStatusText } from '@/renderer/runtime/runtimeStatusText';
 import { iconColors } from '@/renderer/styles/colors';
 
 interface McpServerHeaderProps {
@@ -159,27 +157,11 @@ const McpServerHeader: React.FC<McpServerHeaderProps> = ({
 
   const oauthCapable = supportsOAuth(server);
   const needsLogin = oauthCapable && oauthStatus?.needsLogin;
-  const runtimeStatus = useRuntimeStatus({ kind: 'mcp', id: server.id });
-  const runtimeBusy = runtimeStatus ? isRuntimeActivePhase(runtimeStatus.phase) : false;
-  const runtimeFailed = runtimeStatus?.phase === 'failed';
-  const runtimeText = runtimeStatus ? formatRuntimeStatusText(t, runtimeStatus) : null;
-  const statusText = runtimeBusy || runtimeFailed
-    ? runtimeText || ''
-    : getStatusText(server, server.last_test_status, oauthStatus, isTestingConnection, t);
-  const statusIcon = runtimeBusy
-    ? <LoadingOne fill={iconColors.primary} className='h-[24px]' />
-    : runtimeFailed
-      ? <CloseSmall fill={iconColors.danger} className='h-[24px]' />
-      : getStatusIcon(server.last_test_status, oauthStatus, isTestingConnection);
-  const statusPopoverContent = runtimeBusy || runtimeFailed
-    ? (
-        <div className='max-w-300px text-13px leading-20px text-t-primary'>
-          {runtimeText}
-        </div>
-      )
-    : getStatusPopoverContent(server, t);
+  const statusText = getStatusText(server, server.last_test_status, oauthStatus, isTestingConnection, t);
+  const statusIcon = getStatusIcon(server.last_test_status, oauthStatus, isTestingConnection);
+  const statusPopoverContent = getStatusPopoverContent(server, t);
 
-  const isError = server.last_test_status === 'error' || runtimeFailed;
+  const isError = server.last_test_status === 'error';
 
   return (
     <div className='flex items-center justify-between group'>
@@ -211,12 +193,10 @@ const McpServerHeader: React.FC<McpServerHeaderProps> = ({
           <Button
             size='mini'
             icon={<Refresh size={'14'} />}
-            title={t(runtimeFailed ? 'settings.runtimeRetryConnectionTest' : 'settings.mcpTestConnection')}
-            loading={isTestingConnection || runtimeBusy}
+            title={t('settings.mcpTestConnection')}
+            loading={isTestingConnection}
             onClick={() => onTestConnection(server)}
-          >
-            {runtimeFailed ? t('settings.runtimeRetryConnectionTest') : undefined}
-          </Button>
+          />
         )}
       </div>
       {!isReadOnly && (
