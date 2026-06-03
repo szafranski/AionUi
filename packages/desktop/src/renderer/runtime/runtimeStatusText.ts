@@ -2,6 +2,26 @@ import type { TFunction } from 'i18next';
 
 import type { IRuntimeStatusEvent, IRuntimeStatusScope } from '@/common/adapter/ipcBridge';
 
+function extractDownloadProgress(message?: string | null): string | null {
+  if (!message) {
+    return null;
+  }
+
+  const match = message.match(/\((\d+)MB(?:\s*\/\s*(\d+)MB)?\)/i);
+  if (!match) {
+    return null;
+  }
+
+  const downloaded = `${match[1]}MB`;
+  const total = match[2] ? `${match[2]}MB` : null;
+  return total ? `${downloaded} / ${total}` : downloaded;
+}
+
+function appendProgressSuffix(text: string, progress: string): string {
+  const trimmed = text.trim().replace(/[。.]$/, '');
+  return `${trimmed} (${progress})`;
+}
+
 export function formatRuntimeScopeLabel(t: TFunction, scope: IRuntimeStatusScope): string {
   switch (scope.kind) {
     case 'conversation':
@@ -15,14 +35,18 @@ export function formatRuntimeScopeLabel(t: TFunction, scope: IRuntimeStatusScope
 
 export function formatRuntimeStatusText(t: TFunction, status: IRuntimeStatusEvent): string {
   switch (status.phase) {
-    case 'waiting_for_lock':
+    case 'waiting_for_lock': {
       return t('settings.runtimeStatus.waitingForLock', {
         defaultValue: 'Waiting for another task to finish preparing the runtime.',
       });
-    case 'downloading':
-      return t('settings.runtimeStatus.downloading', {
+    }
+    case 'downloading': {
+      const base = t('settings.runtimeStatus.downloading', {
         defaultValue: 'Downloading the managed Node runtime.',
       });
+      const progress = extractDownloadProgress(status.message);
+      return progress ? appendProgressSuffix(base, progress) : base;
+    }
     case 'extracting':
       return t('settings.runtimeStatus.extracting', {
         defaultValue: 'Extracting the managed Node runtime.',
