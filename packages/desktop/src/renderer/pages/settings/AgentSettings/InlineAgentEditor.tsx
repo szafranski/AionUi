@@ -8,13 +8,15 @@ import type { CustomAgentAdvancedOverrides } from '@/common/types/platform/acpTy
 import type { AgentMetadata } from '@/renderer/utils/model/agentTypes';
 import { acpConversation } from '@/common/adapter/ipcBridge';
 import { Alert, Avatar, Button, Collapse, Input, Typography } from '@arco-design/web-react';
-import { Plus, Delete, CheckOne, CloseOne } from '@icon-park/react';
+import { Plus, Delete, CheckOne, CloseOne, LoadingOne } from '@icon-park/react';
 import EmojiPicker from '@/renderer/components/chat/EmojiPicker';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { uuid } from '@/common/utils';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { clearRuntimeStatus, isRuntimeActivePhase, useRuntimeStatus } from '@/renderer/runtime/runtimeStatusStore';
+import { formatRuntimeStatusText } from '@/renderer/runtime/runtimeStatusText';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'fail_cli' | 'fail_acp';
@@ -138,6 +140,9 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
   const isJsonEditingRef = useRef(false);
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testErrorDetail, setTestErrorDetail] = useState('');
+  const runtimeScopeId = useMemo(() => agent?.id || uuid(), [agent?.id]);
+  const runtimeScope = useMemo(() => ({ kind: 'custom_agent' as const, id: runtimeScopeId }), [runtimeScopeId]);
+  const runtimeStatus = useRuntimeStatus(runtimeScope);
 
   // Canonical empty shape shown when the user has not filled anything yet.
   // Keep keys in sync with CustomAgentAdvancedOverrides.
@@ -242,6 +247,7 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
   }, []);
 
   const handleTestConnection = useCallback(async () => {
+    clearRuntimeStatus(runtimeScope);
     setTestStatus('testing');
     setTestErrorDetail('');
     try {
@@ -251,6 +257,7 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
         command: command.trim(),
         acp_args: parsedArgs.length > 0 ? parsedArgs : undefined,
         env: Object.keys(envObj).length > 0 ? envObj : undefined,
+        runtime_scope_id: runtimeScopeId,
       });
       switch (result.step) {
         case 'success':
@@ -270,7 +277,7 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
       setTestStatus('fail_cli');
       setTestErrorDetail(error instanceof Error ? error.message : String(error));
     }
-  }, [command, argsString, envVars]);
+  }, [command, argsString, envVars, runtimeScope, runtimeScopeId]);
 
   const handleSubmit = useCallback(() => {
     const parsedArgs = parseArgsString(argsString);
@@ -299,6 +306,7 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
 
   const isSubmitDisabled = !name.trim() || !command.trim();
   const isTestDisabled = !command.trim() || testStatus === 'testing';
+  const showRuntimeStatus = runtimeStatus && (isRuntimeActivePhase(runtimeStatus.phase) || runtimeStatus.phase === 'failed');
   const fieldLabelClassName = 'mb-6px block text-13px font-medium text-t-primary';
   const fieldHelpClassName = 'mt-4px block text-12px leading-18px text-t-tertiary';
 
@@ -407,6 +415,16 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
         >
           {testStatus === 'testing' ? t('settings.testConnectionTesting') : t('settings.testConnectionBtn')}
         </Button>
+        {showRuntimeStatus && (
+          <Alert
+            className='mt-10px'
+            type={runtimeStatus.phase === 'failed' ? 'error' : 'info'}
+            icon={
+              runtimeStatus.phase === 'failed' ? <CloseOne theme='filled' size={16} /> : <LoadingOne className='animate-spin' size={16} />
+            }
+            content={formatRuntimeStatusText(t, runtimeStatus)}
+          />
+        )}
         {testStatus === 'success' && (
           <Alert
             className='mt-10px'
