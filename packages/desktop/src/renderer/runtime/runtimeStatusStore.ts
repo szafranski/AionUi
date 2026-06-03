@@ -78,9 +78,18 @@ function phasePriority(phase: RuntimeStatusPhase): number {
   }
 }
 
-export async function retryRuntimeStatus(scope: IRuntimeStatusScope): Promise<void> {
+export async function retryRuntimeStatus(status: IRuntimeStatusEvent): Promise<void> {
   ensureInitialized();
-  await systemSettings.ensureNodeRuntime.invoke({ scope });
+  if (status.resource === 'node') {
+    await systemSettings.ensureNodeRuntime.invoke({ scope: status.scope });
+    return;
+  }
+  if (status.resource === 'acp_tool' && status.resource_id) {
+    await systemSettings.ensureManagedAcpTool.invoke({
+      scope: status.scope,
+      tool_id: status.resource_id,
+    });
+  }
 }
 
 export function dismissRuntimeStatus(scope: IRuntimeStatusScope) {

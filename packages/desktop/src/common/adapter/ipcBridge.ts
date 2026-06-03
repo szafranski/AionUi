@@ -342,7 +342,7 @@ export interface ICdpConfig {
 }
 
 export type RuntimeStatusScopeKind = 'conversation' | 'mcp' | 'custom_agent';
-export type RuntimeResourceKind = 'node';
+export type RuntimeResourceKind = 'node' | 'acp_tool';
 export type RuntimeStatusPhase = 'waiting_for_lock' | 'downloading' | 'extracting' | 'validating' | 'ready' | 'failed';
 export type RuntimeFailureKind =
   | 'timeout'
@@ -359,6 +359,7 @@ export interface IRuntimeStatusScope {
 
 export interface IRuntimeStatusEvent {
   resource: RuntimeResourceKind;
+  resource_id?: string;
   scope: IRuntimeStatusScope;
   phase: RuntimeStatusPhase;
   failure_kind?: RuntimeFailureKind;
@@ -1116,6 +1117,9 @@ export const systemSettings = {
   getPetConfirmEnabled: bridge.buildProvider<boolean, void>('system-settings:get-pet-confirm-enabled'),
   setPetConfirmEnabled: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-pet-confirm-enabled'),
   ensureNodeRuntime: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope }>('/api/system/ensure-node-runtime'),
+  ensureManagedAcpTool: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope; tool_id: string }>(
+    '/api/system/ensure-managed-acp-tool'
+  ),
 };
 
 // ---------------------------------------------------------------------------

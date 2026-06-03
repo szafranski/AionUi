@@ -33,58 +33,85 @@ export function formatRuntimeScopeLabel(t: TFunction, scope: IRuntimeStatusScope
   }
 }
 
+
+function formatRuntimeResourceLabel(t: TFunction, status: IRuntimeStatusEvent): string {
+  if (status.resource === 'acp_tool') {
+    if (status.resource_id === 'codex-acp') {
+      return t('settings.runtimeResource.codexAcp');
+    }
+    if (status.resource_id === 'claude-agent-acp') {
+      return t('settings.runtimeResource.claudeAgentAcp');
+    }
+    return t('settings.runtimeResource.acpTool');
+  }
+  return t('settings.runtimeResource.node');
+}
+
 export function formatRuntimeStatusText(t: TFunction, status: IRuntimeStatusEvent): string {
+  const resource = formatRuntimeResourceLabel(t, status);
+
   switch (status.phase) {
     case 'waiting_for_lock': {
       return t('settings.runtimeStatus.waitingForLock', {
-        defaultValue: 'Waiting for another task to finish preparing the runtime.',
+        resource,
+        defaultValue: 'Waiting for another task to finish preparing {{resource}}.',
       });
     }
     case 'downloading': {
       const base = t('settings.runtimeStatus.downloading', {
-        defaultValue: 'Downloading the managed Node runtime.',
+        resource,
+        defaultValue: 'Downloading {{resource}}.',
       });
       const progress = extractDownloadProgress(status.message);
       return progress ? appendProgressSuffix(base, progress) : base;
     }
     case 'extracting':
       return t('settings.runtimeStatus.extracting', {
-        defaultValue: 'Extracting the managed Node runtime.',
+        resource,
+        defaultValue: 'Extracting {{resource}}.',
       });
     case 'validating':
       return t('settings.runtimeStatus.validating', {
-        defaultValue: 'Validating the managed Node runtime.',
+        resource,
+        defaultValue: 'Validating {{resource}}.',
       });
     case 'ready':
       return t('settings.runtimeStatus.ready', {
-        defaultValue: 'The managed Node runtime is ready.',
+        resource,
+        defaultValue: '{{resource}} is ready.',
       });
     case 'failed':
       switch (status.failure_kind) {
         case 'timeout':
           return t('settings.runtimeStatus.failedTimeout', {
-            defaultValue: 'Preparing the managed Node runtime timed out. Try again.',
+            resource,
+            defaultValue: 'Preparing {{resource}} timed out. Try again.',
           });
         case 'download_failed':
           return t('settings.runtimeStatus.failedDownload', {
-            defaultValue: 'Downloading the managed Node runtime failed. Check your network and try again.',
+            resource,
+            defaultValue: 'Downloading {{resource}} failed. Check your network and try again.',
           });
         case 'http_status':
           return t('settings.runtimeStatus.failedHttp', {
+            resource,
             status: status.status_code ?? 'unknown',
-            defaultValue: 'Downloading the managed Node runtime failed (HTTP {{status}}).',
+            defaultValue: 'Downloading {{resource}} failed (HTTP {{status}}).',
           });
         case 'validation_failed':
           return t('settings.runtimeStatus.failedValidation', {
-            defaultValue: 'Validating the managed Node runtime failed. Try again.',
+            resource,
+            defaultValue: 'Validating {{resource}} failed. Try again.',
           });
         case 'unsupported_platform':
           return t('settings.runtimeStatus.failedUnsupported', {
-            defaultValue: 'Managed Node runtime is not supported on this platform.',
+            resource,
+            defaultValue: '{{resource}} is not supported on this platform.',
           });
         default:
           return t('settings.runtimeStatus.failedUnknown', {
-            defaultValue: 'Preparing the managed Node runtime failed. Try again.',
+            resource,
+            defaultValue: 'Preparing {{resource}} failed. Try again.',
           });
       }
   }

@@ -26,7 +26,7 @@ const GlobalRuntimeStatus: React.FC = () => {
   const text = formatRuntimeStatusText(t, status);
 
   const handleRetry = () => {
-    void retryRuntimeStatus(status.scope);
+    void retryRuntimeStatus(status);
   };
 
   const handleDismiss = () => {

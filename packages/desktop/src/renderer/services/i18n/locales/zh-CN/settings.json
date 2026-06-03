@@ -963,17 +963,23 @@
   },
   "retry": "重试",
   "runtimeStatus": {
-    "waitingForLock": "正在等待其他任务完成运行环境准备。",
-    "downloading": "正在下载托管 Node 运行环境。",
-    "extracting": "正在解压托管 Node 运行环境。",
-    "validating": "正在校验托管 Node 运行环境。",
-    "ready": "托管 Node 运行环境已准备完成。",
-    "failedTimeout": "托管 Node 运行环境准备超时，请重试。",
-    "failedDownload": "托管 Node 运行环境下载失败，请检查网络后重试。",
-    "failedHttp": "托管 Node 运行环境下载失败（HTTP {{status}}）。",
-    "failedValidation": "托管 Node 运行环境校验失败，请重试。",
-    "failedUnsupported": "当前平台暂不支持托管 Node 运行环境。",
-    "failedUnknown": "托管 Node 运行环境准备失败，请重试。"
+    "waitingForLock": "正在等待其他任务完成 {{resource}} 准备。",
+    "downloading": "正在下载 {{resource}}。",
+    "extracting": "正在解压 {{resource}}。",
+    "validating": "正在校验 {{resource}}。",
+    "ready": "{{resource}} 已准备完成。",
+    "failedTimeout": "{{resource}} 准备超时，请重试。",
+    "failedDownload": "{{resource}} 下载失败，请检查网络后重试。",
+    "failedHttp": "{{resource}} 下载失败（HTTP {{status}}）。",
+    "failedValidation": "{{resource}} 校验失败，请重试。",
+    "failedUnsupported": "当前平台暂不支持 {{resource}}。",
+    "failedUnknown": "{{resource}} 准备失败，请重试。"
+  },
+  "runtimeResource": {
+    "node": "托管 Node 运行环境",
+    "acpTool": "托管 ACP 运行组件",
+    "codexAcp": "Codex ACP 运行组件",
+    "claudeAgentAcp": "Claude ACP 运行组件"
   },
   "runtimeScope": {
     "conversation": "对话",

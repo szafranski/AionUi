@@ -882,21 +882,27 @@
   "mcpInlineCommandHint": "На цій машині відсутня команда {{command}}. Встановіть її й протестуйте ще раз.",
   "retry": "Retry",
   "runtimeStatus": {
-    "waitingForLock": "Waiting for another task to finish preparing the runtime.",
-    "downloading": "Downloading the managed Node runtime.",
-    "extracting": "Extracting the managed Node runtime.",
-    "validating": "Validating the managed Node runtime.",
-    "ready": "The managed Node runtime is ready.",
-    "failedTimeout": "Preparing the managed Node runtime timed out. Try again.",
-    "failedDownload": "Downloading the managed Node runtime failed. Check your network and try again.",
-    "failedHttp": "Downloading the managed Node runtime failed (HTTP {{status}}).",
-    "failedValidation": "Validating the managed Node runtime failed. Try again.",
-    "failedUnsupported": "Managed Node runtime is not supported on this platform.",
-    "failedUnknown": "Preparing the managed Node runtime failed. Try again."
+    "waitingForLock": "Waiting for another task to finish preparing {{resource}}.",
+    "downloading": "Downloading {{resource}}.",
+    "extracting": "Extracting {{resource}}.",
+    "validating": "Validating {{resource}}.",
+    "ready": "{{resource}} is ready.",
+    "failedTimeout": "Preparing {{resource}} timed out. Try again.",
+    "failedDownload": "Downloading {{resource}} failed. Check your network and try again.",
+    "failedHttp": "Downloading {{resource}} failed (HTTP {{status}}).",
+    "failedValidation": "Validating {{resource}} failed. Try again.",
+    "failedUnsupported": "{{resource}} is not supported on this platform.",
+    "failedUnknown": "Preparing {{resource}} failed. Try again."
   },
   "runtimeScope": {
     "conversation": "Conversation",
     "mcp": "MCP",
     "customAgent": "Custom Agent"
+  },
+  "runtimeResource": {
+    "node": "the managed Node runtime",
+    "acpTool": "the managed ACP tool",
+    "codexAcp": "the Codex ACP runtime component",
+    "claudeAgentAcp": "the Claude ACP runtime component"
   }
 }
