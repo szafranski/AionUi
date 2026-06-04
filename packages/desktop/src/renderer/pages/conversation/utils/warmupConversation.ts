@@ -56,8 +56,10 @@ export function warmupConversation(conversation_id: string): Promise<void> {
     return existing;
   }
 
-
   const previous = getWarmupConversationStatus(conversation_id);
+  if (previous.phase === 'ready') {
+    return Promise.resolve();
+  }
   const nextAttempt = previous.attempt + 1;
   setWarmupStatus(conversation_id, {
     phase: 'preparing',

@@ -965,17 +965,18 @@
   "retry": "Retry",
   "runtimeStatus": {
     "waitingForLock": "Waiting for another task to finish preparing {{resource}}.",
-    "downloading": "Downloading {{resource}}.",
-    "extracting": "Extracting {{resource}}.",
+    "downloading": "Preparing {{resource}}.",
+    "extracting": "Preparing {{resource}}.",
     "validating": "Validating {{resource}}.",
     "ready": "{{resource}} is ready.",
-    "failedTimeout": "Preparing {{resource}} timed out. Try again.",
-    "failedDownload": "Downloading {{resource}} failed. Check your network and try again.",
-    "failedHttp": "Downloading {{resource}} failed (HTTP {{status}}).",
-    "failedValidation": "Validating {{resource}} failed. Try again.",
+    "failedTimeout": "Preparing {{resource}} timed out. Restart the app and try again. If it continues, reinstall the app or download a fresh package.",
+    "failedDownload": "Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.",
+    "failedHttp": "Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.",
+    "failedValidation": "Validating {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.",
+    "failedBundled": "Preparing {{resource}} failed because the bundled component files are invalid. Reinstall the app or download a fresh package and try again.",
     "failedUnsupported": "{{resource}} is not supported on this platform.",
-    "failedUnknown": "Preparing {{resource}} failed. Try again.",
-    "failedChecksum": "Не удалось проверить {{resource}}: загруженный файл может быть поврежден. Повторите попытку."
+    "failedUnknown": "Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.",
+    "failedChecksum": "Не удалось проверить {{resource}}: файлы компонента могут быть повреждены. Переустановите приложение или скачайте новый пакет и повторите попытку."
   },
   "runtimeScope": {
     "conversation": "Conversation",

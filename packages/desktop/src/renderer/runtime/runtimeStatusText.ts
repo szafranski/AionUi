@@ -22,6 +22,22 @@ function appendProgressSuffix(text: string, progress: string): string {
   return `${trimmed} (${progress})`;
 }
 
+function isLocalActivationMessage(message?: string | null): boolean {
+  if (!message) {
+    return false;
+  }
+  return /activating managed/i.test(message);
+}
+
+function isBundledResourceFailure(message?: string | null): boolean {
+  if (!message) {
+    return false;
+  }
+  return /bundled|managed-resources|installation incomplete|local .* failed validation|failed validation under .*resources/i.test(
+    message
+  );
+}
+
 export function formatRuntimeScopeLabel(t: TFunction, scope: IRuntimeStatusScope): string {
   switch (scope.kind) {
     case 'conversation':
@@ -60,15 +76,21 @@ export function formatRuntimeStatusText(t: TFunction, status: IRuntimeStatusEven
     case 'downloading': {
       const base = t('settings.runtimeStatus.downloading', {
         resource,
-        defaultValue: 'Downloading {{resource}}.',
+        defaultValue: 'Preparing {{resource}}.',
       });
       const progress = extractDownloadProgress(status.message);
       return progress ? appendProgressSuffix(base, progress) : base;
     }
     case 'extracting':
+      if (isLocalActivationMessage(status.message)) {
+        return t('settings.runtimeStatus.extracting', {
+          resource,
+          defaultValue: 'Preparing {{resource}}.',
+        });
+      }
       return t('settings.runtimeStatus.extracting', {
         resource,
-        defaultValue: 'Extracting {{resource}}.',
+        defaultValue: 'Preparing {{resource}}.',
       });
     case 'validating':
       return t('settings.runtimeStatus.validating', {
@@ -85,28 +107,53 @@ export function formatRuntimeStatusText(t: TFunction, status: IRuntimeStatusEven
         case 'timeout':
           return t('settings.runtimeStatus.failedTimeout', {
             resource,
-            defaultValue: 'Preparing {{resource}} timed out. Try again.',
+            defaultValue:
+              'Preparing {{resource}} timed out. Restart the app and try again. If it continues, reinstall the app or download a fresh package.',
           });
         case 'download_failed':
+          if (isBundledResourceFailure(status.message)) {
+            return t('settings.runtimeStatus.failedBundled', {
+              resource,
+              defaultValue:
+                'Preparing {{resource}} failed because the bundled component files are invalid. Reinstall the app or download a fresh package and try again.',
+            });
+          }
           return t('settings.runtimeStatus.failedDownload', {
             resource,
-            defaultValue: 'Downloading {{resource}} failed. Check your network and try again.',
+            defaultValue:
+              'Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.',
           });
         case 'http_status':
-          return t('settings.runtimeStatus.failedHttp', {
+          if (isBundledResourceFailure(status.message)) {
+            return t('settings.runtimeStatus.failedBundled', {
+              resource,
+              defaultValue:
+                'Preparing {{resource}} failed because the bundled component files are invalid. Reinstall the app or download a fresh package and try again.',
+            });
+          }
+          return t('settings.runtimeStatus.failedUnknown', {
             resource,
-            status: status.status_code ?? 'unknown',
-            defaultValue: 'Downloading {{resource}} failed (HTTP {{status}}).',
+            defaultValue:
+              'Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.',
           });
         case 'checksum_mismatch':
           return t('settings.runtimeStatus.failedChecksum', {
             resource,
-            defaultValue: 'Verifying {{resource}} failed because the downloaded file was corrupted. Try again.',
+            defaultValue:
+              'Verifying {{resource}} failed because the component files may be corrupted. Reinstall the app or download a fresh package and try again.',
           });
         case 'validation_failed':
+          if (isBundledResourceFailure(status.message)) {
+            return t('settings.runtimeStatus.failedBundled', {
+              resource,
+              defaultValue:
+                'Preparing {{resource}} failed because the bundled component files are invalid. Reinstall the app or download a fresh package and try again.',
+            });
+          }
           return t('settings.runtimeStatus.failedValidation', {
             resource,
-            defaultValue: 'Validating {{resource}} failed. Try again.',
+            defaultValue:
+              'Validating {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.',
           });
         case 'unsupported_platform':
           return t('settings.runtimeStatus.failedUnsupported', {
@@ -114,9 +161,17 @@ export function formatRuntimeStatusText(t: TFunction, status: IRuntimeStatusEven
             defaultValue: '{{resource}} is not supported on this platform.',
           });
         default:
+          if (isBundledResourceFailure(status.message)) {
+            return t('settings.runtimeStatus.failedBundled', {
+              resource,
+              defaultValue:
+                'Preparing {{resource}} failed because the bundled component files are invalid. Reinstall the app or download a fresh package and try again.',
+            });
+          }
           return t('settings.runtimeStatus.failedUnknown', {
             resource,
-            defaultValue: 'Preparing {{resource}} failed. Try again.',
+            defaultValue:
+              'Preparing {{resource}} failed. Restart the app and try again. If it continues, reinstall the app or download a fresh package.',
           });
       }
   }

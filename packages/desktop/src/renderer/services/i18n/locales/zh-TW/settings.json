@@ -965,17 +965,18 @@
   "retry": "重試",
   "runtimeStatus": {
     "waitingForLock": "正在等待其他任務完成 {{resource}} 準備。",
-    "downloading": "正在下載 {{resource}}。",
-    "extracting": "正在解壓 {{resource}}。",
+    "downloading": "正在準備 {{resource}}。",
+    "extracting": "正在準備 {{resource}}。",
     "validating": "正在驗證 {{resource}}。",
     "ready": "{{resource}} 已準備完成。",
-    "failedTimeout": "{{resource}} 準備逾時，請重試。",
-    "failedDownload": "{{resource}} 下載失敗，請檢查網路後重試。",
-    "failedHttp": "{{resource}} 下載失敗（HTTP {{status}}）。",
-    "failedValidation": "{{resource}} 驗證失敗，請重試。",
+    "failedTimeout": "{{resource}} 準備逾時。請重新開啟應用程式後再試；如果仍然出現，請重新安裝應用程式或重新下載完整安裝包。",
+    "failedDownload": "{{resource}} 準備失敗。請重新開啟應用程式後再試；如果仍然出現，請重新安裝應用程式或重新下載完整安裝包。",
+    "failedHttp": "{{resource}} 準備失敗。請重新開啟應用程式後再試；如果仍然出現，請重新安裝應用程式或重新下載完整安裝包。",
+    "failedValidation": "{{resource}} 驗證失敗。請重新開啟應用程式後再試；如果仍然出現，請重新安裝應用程式或重新下載完整安裝包。",
+    "failedBundled": "{{resource}} 準備失敗，應用內建的元件檔案無效。請重新安裝應用程式或重新下載完整安裝包後再試。",
     "failedUnsupported": "目前平台暫不支援 {{resource}}。",
-    "failedUnknown": "{{resource}} 準備失敗，請重試。",
-    "failedChecksum": "驗證 {{resource}} 失敗，下載的檔案可能已損壞。請重試。"
+    "failedUnknown": "{{resource}} 準備失敗。請重新開啟應用程式後再試；如果仍然出現，請重新安裝應用程式或重新下載完整安裝包。",
+    "failedChecksum": "驗證 {{resource}} 失敗，元件檔案可能已損壞。請重新安裝應用程式或重新下載完整安裝包後再試。"
   },
   "runtimeScope": {
     "conversation": "對話",
