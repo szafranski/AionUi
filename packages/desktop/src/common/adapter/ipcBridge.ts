@@ -15,7 +15,14 @@
 import type { IConfirmation } from '@/common/chat/chatLib';
 import { bridge } from '@office-ai/platform';
 import type { OpenDialogOptions } from 'electron';
-import type { ICssTheme, IMcpServer, IProvider, TChatConversation, TProviderWithModel } from '../config/storage';
+import type {
+  ICssTheme,
+  IMcpServer,
+  IProvider,
+  ISessionMcpServer,
+  TChatConversation,
+  TProviderWithModel,
+} from '../config/storage';
 import type {
   Assistant,
   CreateAssistantRequest,
@@ -30,6 +37,8 @@ import type {
   CreateProviderRequest,
   FetchModelsAnonymousRequest,
   FetchModelsResponse,
+  ProviderHealthCheckRequest,
+  ProviderHealthCheckResponse,
   UpdateProviderRequest,
 } from '../types/provider/providerApi';
 import type { SpeechToTextRequest, SpeechToTextResult } from '../types/provider/speech';
@@ -76,7 +85,12 @@ import {
   toBackendAgent,
 } from './teamMapper';
 import { fromBackendCompareResult, type RawCompareResult } from './fileSnapshotMapper';
-import { absoluteToRelativePath, fromBackendWorkspaceList } from './workspaceMapper';
+import {
+  absoluteToRelativePath,
+  fromBackendWorkspaceFlatFiles,
+  fromBackendWorkspaceList,
+  type RawWorkspaceFlatFile,
+} from './workspaceMapper';
 
 // ---------------------------------------------------------------------------
 // Shell — routed to POST /api/shell/*
@@ -141,19 +155,19 @@ export const conversation = {
       const { model: _rawModel, ...rest } = p.conversation as TChatConversation & {
         model?: TProviderWithModel;
       };
-      const conversation: Record<string, unknown> = { ...rest };
+      const clonedConversation: Record<string, unknown> = { ...rest };
       if (isAionrs) {
         const model = toApiModelOptional(_rawModel);
-        if (model) conversation.model = model;
+        if (model) clonedConversation.model = model;
       }
       return {
-        conversation,
+        conversation: clonedConversation,
       };
     }),
     fromApiConversation
   ),
   get: withResponseMap(
-    httpGet<TChatConversation, { id: string }>((p) => `/api/conversations/${p.id}`),
+    httpGet<TChatConversation, { id: string }>((p) => `/api/conversations/${p.id}`, { silentStatuses: [404] }),
     fromApiConversation
   ),
   getAssociateConversation: withResponseMap(
@@ -233,13 +247,13 @@ export const conversation = {
         };
     const rawRuntime = (r.runtime ?? {}) as Record<string, unknown>;
     const runtime: IConversationTurnCompletedEvent['runtime'] = {
+      state: (rawRuntime.state ?? 'idle') as IConversationTurnCompletedEvent['runtime']['state'],
+      can_send_message: (rawRuntime.can_send_message ?? rawRuntime.canSendMessage ?? true) as boolean,
       has_task: (rawRuntime.has_task ?? rawRuntime.hasTask ?? false) as boolean,
       task_status: (rawRuntime.task_status ??
         rawRuntime.taskStatus) as IConversationTurnCompletedEvent['runtime']['task_status'],
       is_processing: (rawRuntime.is_processing ?? rawRuntime.isProcessing ?? false) as boolean,
       pending_confirmations: (rawRuntime.pending_confirmations ?? rawRuntime.pendingConfirmations ?? 0) as number,
-      db_status: (rawRuntime.db_status ??
-        rawRuntime.dbStatus) as IConversationTurnCompletedEvent['runtime']['db_status'],
     };
     const rawModel = (r.model ?? {}) as Record<string, unknown>;
     const model: IConversationTurnCompletedEvent['model'] = {
@@ -300,6 +314,10 @@ export const conversation = {
   },
 };
 
+export const runtime = {
+  statusChanged: wsEmitter<IRuntimeStatusEvent>('runtime.statusChanged'),
+};
+
 // ---------------------------------------------------------------------------
 // CDP status / config types (used by application, stays IPC)
 // ---------------------------------------------------------------------------
@@ -323,6 +341,33 @@ export interface ICdpConfig {
   port?: number;
 }
 
+export type RuntimeStatusScopeKind = 'conversation' | 'mcp' | 'custom_agent';
+export type RuntimeResourceKind = 'node' | 'acp_tool';
+export type RuntimeStatusPhase = 'waiting_for_lock' | 'downloading' | 'extracting' | 'validating' | 'ready' | 'failed';
+export type RuntimeFailureKind =
+  | 'timeout'
+  | 'download_failed'
+  | 'http_status'
+  | 'checksum_mismatch'
+  | 'validation_failed'
+  | 'unsupported_platform'
+  | 'unknown';
+
+export interface IRuntimeStatusScope {
+  kind: RuntimeStatusScopeKind;
+  id: string;
+}
+
+export interface IRuntimeStatusEvent {
+  resource: RuntimeResourceKind;
+  resource_id?: string;
+  scope: IRuntimeStatusScope;
+  phase: RuntimeStatusPhase;
+  failure_kind?: RuntimeFailureKind;
+  message?: string;
+  status_code?: number;
+}
+
 export interface IStartOnBootStatus {
   supported: boolean;
   enabled: boolean;
@@ -340,6 +385,15 @@ export interface IGpuStatus {
   autoDisabled: boolean;
   crashCount: number;
   lastCrashAt: number | null;
+}
+
+export type IRendererLogLevel = 'info' | 'warn' | 'error';
+
+export interface IRendererLogEntry {
+  level: IRendererLogLevel;
+  tag: string;
+  message: string;
+  data?: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -378,6 +432,7 @@ export const application = {
   setGpuOverride: bridge.buildProvider<IBridgeResponse<IGpuStatus>, { override: IGpuOverride | null }>(
     'app.set-gpu-override'
   ),
+  writeRendererLog: bridge.buildProvider<void, IRendererLogEntry>('app.write-renderer-log'),
   logStream: bridge.buildEmitter<{ level: 'log' | 'warn' | 'error'; tag: string; message: string; data?: unknown }>(
     'app.log-stream'
   ),
@@ -433,7 +488,10 @@ export const dialog = {
 
 export const fs = {
   getFilesByDir: httpPost<Array<IDirOrFile>, { dir: string; root: string }>('/api/fs/dir'),
-  listWorkspaceFiles: httpPost<Array<IWorkspaceFlatFile>, { root: string }>('/api/fs/list'),
+  listWorkspaceFiles: withResponseMap(
+    httpPost<Array<RawWorkspaceFlatFile>, { root: string }>('/api/fs/list'),
+    fromBackendWorkspaceFlatFiles
+  ),
   getImageBase64: httpPost<string | null, { path: string; workspace?: string }>('/api/fs/image-base64'),
   fetchRemoteImage: httpPost<string, { url: string }>('/api/fs/fetch-remote-image'),
   readFile: httpPost<string | null, { path: string; workspace?: string }>('/api/fs/read'),
@@ -509,7 +567,9 @@ export const fs = {
     }>,
     void
   >('/api/skills/detect-external'),
-  importSkillWithSymlink: httpPost<{ skill_name: string }, { skill_path: string }>('/api/skills/import-symlink'),
+  importSkillWithSymlink: httpPost<{ skill_name: string; skill_names?: string[] }, { skill_path: string }>(
+    '/api/skills/import-symlink'
+  ),
   deleteSkill: httpDelete<void, { skill_name: string }>((p) => `/api/skills/${p.skill_name}`),
   getSkillPaths: httpGet<{ user_skills_dir: string; builtin_skills_dir: string }, void>('/api/skills/paths'),
   getCustomExternalPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/external-paths'),
@@ -676,7 +736,7 @@ export const acpConversation = {
   refreshCustomAgents: httpPost<void, void>('/api/agents/refresh'),
   testCustomAgent: httpPost<
     { step: 'success' } | { step: 'fail_cli'; error: string } | { step: 'fail_acp'; error: string },
-    { command: string; acp_args?: string[]; env?: Record<string, string> }
+    { command: string; acp_args?: string[]; env?: Record<string, string>; runtime_scope_id?: string }
   >('/api/agents/custom/try-connect'),
   createCustomAgent: httpPost<
     AgentMetadata,
@@ -725,6 +785,9 @@ export const acpConversation = {
   checkAgentHealth: httpPost<{ available: boolean; latency?: number; error?: string }, { backend: string }>(
     '/api/agents/health-check'
   ),
+  checkProviderHealth: httpPost<ProviderHealthCheckResponse, ProviderHealthCheckRequest>(
+    '/api/agents/provider-health-check'
+  ),
   setMode: httpPut<void, { conversation_id: string; mode: string }>(
     (p) => `/api/conversations/${p.conversation_id}/mode`,
     (p) => ({ mode: p.mode })
@@ -753,36 +816,70 @@ export const acpConversation = {
 // ---------------------------------------------------------------------------
 
 export const mcpService = {
+  listServers: httpGet<IMcpServer[], void>('/api/mcp/servers'),
+  createServer: httpPost<
+    IMcpServer,
+    Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>
+  >('/api/mcp/servers'),
+  importServers: httpPost<
+    IMcpServer[],
+    { servers: Array<Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>> }
+  >('/api/mcp/servers/import'),
+  updateServer: httpPut<
+    IMcpServer,
+    {
+      id: string;
+      data: Partial<Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>>;
+    }
+  >(
+    (p) => `/api/mcp/servers/${p.id}`,
+    (p) => p.data
+  ),
+  deleteServer: httpDelete<void, { id: string }>((p) => `/api/mcp/servers/${p.id}`),
+  toggleServer: httpPost<IMcpServer, { id: string }>(
+    (p) => `/api/mcp/servers/${p.id}/toggle`,
+    () => undefined
+  ),
+  batchImportServers: httpPost<
+    IMcpServer[],
+    { servers: Array<Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'>> }
+  >('/api/mcp/servers/import'),
   getAgentMcpConfigs: httpGet<
-    Array<{ source: string; servers: IMcpServer[] }>,
+    Array<{
+      source: string;
+      servers: Array<
+        IMcpServer & {
+          importable: boolean;
+          import_skip_reason?: string;
+        }
+      >;
+    }>,
     Array<{ agent_type: string; backend?: string; name: string; cli_path?: string }>
   >('/api/mcp/agent-configs'),
   testMcpConnection: httpPost<
     {
       success: boolean;
-      tools?: Array<{ name: string; description?: string; _meta?: Record<string, unknown> }>;
+      tools?: Array<{
+        name: string;
+        description?: string;
+        input_schema?: unknown;
+        _meta?: Record<string, unknown>;
+      }>;
       error?: string;
+      code?: string;
+      details?: unknown;
       needsAuth?: boolean;
+      needs_auth?: boolean;
       authMethod?: 'oauth' | 'basic';
+      auth_method?: 'oauth' | 'basic';
       wwwAuthenticate?: string;
+      www_authenticate?: string;
     },
-    IMcpServer
+    IMcpServer & { runtime_scope_id?: string }
   >('/api/mcp/test-connection'),
-  syncMcpToAgents: httpPost<
-    { success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> },
-    { servers: string[] }
-  >('/api/mcp/sync-to-agents'),
-  removeMcpFromAgents: httpPost<
-    { success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> },
-    { server_names: string[] }
-  >('/api/mcp/remove-from-agents'),
-  checkOAuthStatus: httpPost<{ isAuthenticated: boolean; needsLogin: boolean; error?: string }, IMcpServer>(
-    '/api/mcp/oauth/check-status'
-  ),
-  loginMcpOAuth: httpPost<{ success: boolean; error?: string }, { server: IMcpServer; config?: unknown }>(
-    '/api/mcp/oauth/login'
-  ),
-  logoutMcpOAuth: httpPost<void, string>('/api/mcp/oauth/logout', (serverName) => ({ serverName })),
+  checkOAuthStatus: httpPost<{ authenticated: boolean }, { server_url: string }>('/api/mcp/oauth/check-status'),
+  loginMcpOAuth: httpPost<{ success: boolean; error?: string }, { server_url: string }>('/api/mcp/oauth/login'),
+  logoutMcpOAuth: httpPost<void, { server_url: string }>('/api/mcp/oauth/logout'),
   getAuthenticatedServers: httpGet<string[], void>('/api/mcp/oauth/authenticated'),
 };
 
@@ -860,11 +957,15 @@ export type PaginatedResult<T> = {
 export const database = {
   getConversationMessages: httpGet<
     PaginatedResult<import('@/common/chat/chatLib').TMessage>,
-    { conversation_id: string; page?: number; page_size?: number; order?: string }
+    { conversation_id: string; page?: number; page_size?: number; order?: string; content_mode?: 'compact' | 'full' }
   >(
     (p) =>
-      `/api/conversations/${p.conversation_id}/messages?page=${p.page ?? 1}&page_size=${p.page_size ?? 50}${p.order ? `&order=${p.order}` : ''}`
+      `/api/conversations/${p.conversation_id}/messages?page=${p.page ?? 1}&page_size=${p.page_size ?? 50}${p.order ? `&order=${p.order}` : ''}${p.content_mode ? `&content_mode=${p.content_mode}` : ''}`
   ),
+  getConversationMessage: httpGet<
+    import('@/common/chat/chatLib').TMessage,
+    { conversation_id: string; message_id: string }
+  >((p) => `/api/conversations/${p.conversation_id}/messages/${encodeURIComponent(p.message_id)}`),
   getUserConversations: withResponseMap(
     httpGet<PaginatedResult<import('@/common/config/storage').TChatConversation>, { cursor?: string; limit?: number }>(
       (p) => {
@@ -982,12 +1083,12 @@ export const windowControls = {
 };
 
 // ---------------------------------------------------------------------------
-// System Settings — routed to /api/settings/*
+// System Settings — routed to /api/settings/* unless they need Electron-native side effects.
 // ---------------------------------------------------------------------------
 
 export const systemSettings = {
-  getCloseToTray: httpGet<boolean, void>('/api/settings/client?key=closeToTray'),
-  setCloseToTray: httpPut<void, { enabled: boolean }>('/api/settings/client', (p) => ({ closeToTray: p.enabled })),
+  getCloseToTray: bridge.buildProvider<boolean, void>('system-settings:get-close-to-tray'),
+  setCloseToTray: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-close-to-tray'),
   getNotificationEnabled: httpGet<boolean, void>('/api/settings/client?key=notificationEnabled'),
   setNotificationEnabled: httpPut<void, { enabled: boolean }>('/api/settings/client', (p) => ({
     notificationEnabled: p.enabled,
@@ -1016,6 +1117,10 @@ export const systemSettings = {
   setPetDnd: bridge.buildProvider<void, { dnd: boolean }>('system-settings:set-pet-dnd'),
   getPetConfirmEnabled: bridge.buildProvider<boolean, void>('system-settings:get-pet-confirm-enabled'),
   setPetConfirmEnabled: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-pet-confirm-enabled'),
+  ensureNodeRuntime: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope }>('/api/system/ensure-node-runtime'),
+  ensureManagedAcpTool: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope; tool_id: string }>(
+    '/api/system/ensure-managed-acp-tool'
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -1262,6 +1367,12 @@ export interface ICreateConversationParams {
     /** Transient: auto-inject skills the user opted out of on the Guid page.
      *  Consumed by backend create handler and stripped before persistence. */
     exclude_auto_inject_skills?: string[];
+    /** Transient: MCP server ids selected on the Guid page. Consumed by the
+     *  backend create handler and snapshotted into conversation.extra. */
+    selected_mcp_server_ids?: string[];
+    /** Transient: session-scoped MCP server configs that are not stored in the
+     *  backend catalog (currently built-in MCP servers). */
+    selected_session_mcp_servers?: ISessionMcpServer[];
     preset_context?: string;
     preset_assistant_id?: string;
     session_mode?: string;
@@ -1278,6 +1389,7 @@ export interface ICreateConversationParams {
       expected_identity_hash?: string | null;
       switched_at?: number;
     };
+    /** Legacy marker for pre-provider-probe health-check conversations. */
     is_health_check?: boolean;
     remote_agent_id?: string;
     extra_skill_paths?: string[];
@@ -1377,11 +1489,12 @@ export interface IConversationTurnCompletedEvent {
   detail: string;
   can_send_message: boolean;
   runtime: {
+    state: 'idle' | 'starting' | 'running' | 'waiting_confirmation';
+    can_send_message: boolean;
     has_task: boolean;
     task_status?: 'pending' | 'running' | 'finished';
     is_processing: boolean;
     pending_confirmations: number;
-    db_status?: 'pending' | 'running' | 'finished';
   };
   workspace: string;
   model: {

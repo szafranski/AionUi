@@ -18,6 +18,8 @@ import { ipcBridge } from '@/common';
 import type { ICreateConversationParams } from '@/common/adapter/ipcBridge';
 import type { AgentCheckResult } from '@/renderer/hooks/agent/useAgentReadinessCheck';
 import { applyDefaultConversationName } from '@/renderer/pages/conversation/utils/newConversationName';
+import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
+import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
 import { getAgentLogo } from '@/renderer/utils/model/agentLogo';
 
 type AgentSetupCardProps = {
@@ -64,7 +66,7 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
 
       try {
         // Get current conversation info
-        const conversation = await ipcBridge.conversation.get.invoke({ id: conversation_id });
+        const conversation = await getConversationOrNull(conversation_id);
         if (!conversation) {
           Message.error(t('conversation.chat.switchAgentFailed', { defaultValue: 'Failed to switch agent' }));
           switchingRef.current = false;
@@ -98,6 +100,15 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
             // Source conversation's skill list is intentionally not carried over —
             // switch-agent is semantically a new conversation.
             preset_assistant_id: conversation.extra?.preset_assistant_id,
+            selected_mcp_server_ids: Array.isArray((conversation.extra as Record<string, unknown>)?.mcp_server_ids)
+              ? ((conversation.extra as Record<string, unknown>).mcp_server_ids as string[])
+              : undefined,
+            selected_session_mcp_servers: Array.isArray(
+              (conversation.extra as Record<string, unknown>)?.session_mcp_servers
+            )
+              ? ((conversation.extra as Record<string, unknown>)
+                  .session_mcp_servers as ICreateConversationParams['extra']['selected_session_mcp_servers'])
+              : undefined,
           },
         };
 
@@ -135,7 +146,7 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
         void navigate(`/conversation/${newConversation.id}`);
       } catch (error) {
         console.error('Failed to switch agent:', error);
-        Message.error(t('conversation.chat.switchAgentFailed', { defaultValue: 'Failed to switch agent' }));
+        Message.error(getConversationCreateErrorMessage(error, t));
       } finally {
         switchingRef.current = false;
         setSwitching(false);

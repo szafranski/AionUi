@@ -125,7 +125,50 @@ export type IMessageText = IMessage<
   }
 >;
 
-export type IMessageTips = IMessage<'tips', { content: string; type: 'error' | 'success' | 'warning' }>;
+export type AgentErrorOwnership = 'aionui' | 'user_agent' | 'user_llm_provider' | 'unknown_upstream';
+
+export type AgentErrorResolutionKind =
+  | 'retry'
+  | 'wait_for_current_response'
+  | 'start_new_session'
+  | 'reconnect_agent'
+  | 'check_agent_login'
+  | 'check_agent_installation'
+  | 'check_agent_version'
+  | 'check_local_command'
+  | 'check_provider_credentials'
+  | 'check_provider_billing'
+  | 'check_provider_base_url'
+  | 'change_model'
+  | 'reduce_context'
+  | 'send_feedback';
+
+export type AgentErrorResolutionTarget = 'provider_settings' | 'agent_settings' | 'new_conversation' | 'feedback';
+
+export type AgentErrorResolution = {
+  kind: AgentErrorResolutionKind;
+  target?: AgentErrorResolutionTarget;
+};
+
+export type AgentStreamErrorInfo = {
+  message: string;
+  code?: string;
+  ownership?: AgentErrorOwnership;
+  detail?: string;
+  workspacePath?: string;
+  retryable?: boolean;
+  feedback_recommended?: boolean;
+  resolution?: AgentErrorResolution;
+};
+
+export type IMessageTips = IMessage<
+  'tips',
+  {
+    content: string;
+    type: 'error' | 'success' | 'warning';
+    error?: AgentStreamErrorInfo;
+  }
+>;
 
 export type IMessageToolCall = IMessage<
   'tool_call',
@@ -341,14 +384,109 @@ export interface IConfirmation<Option extends any = any> {
   command_type?: string;
 }
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const AGENT_ERROR_OWNERSHIPS = new Set<AgentErrorOwnership>([
+  'aionui',
+  'user_agent',
+  'user_llm_provider',
+  'unknown_upstream',
+]);
+
+const AGENT_ERROR_RESOLUTION_KINDS = new Set<AgentErrorResolutionKind>([
+  'retry',
+  'wait_for_current_response',
+  'start_new_session',
+  'reconnect_agent',
+  'check_agent_login',
+  'check_agent_installation',
+  'check_agent_version',
+  'check_local_command',
+  'check_provider_credentials',
+  'check_provider_billing',
+  'check_provider_base_url',
+  'change_model',
+  'reduce_context',
+  'send_feedback',
+]);
+
+const AGENT_ERROR_RESOLUTION_TARGETS = new Set<AgentErrorResolutionTarget>([
+  'provider_settings',
+  'agent_settings',
+  'new_conversation',
+  'feedback',
+]);
+
+export const normalizeAgentErrorResolution = (value: unknown): AgentErrorResolution | undefined => {
+  if (!isObject(value) || typeof value.kind !== 'string') {
+    return undefined;
+  }
+
+  if (!AGENT_ERROR_RESOLUTION_KINDS.has(value.kind as AgentErrorResolutionKind)) {
+    return undefined;
+  }
+
+  const target =
+    typeof value.target === 'string' && AGENT_ERROR_RESOLUTION_TARGETS.has(value.target as AgentErrorResolutionTarget)
+      ? (value.target as AgentErrorResolutionTarget)
+      : undefined;
+
+  return {
+    kind: value.kind as AgentErrorResolutionKind,
+    ...(target ? { target } : {}),
+  };
+};
+
+export const normalizeAgentStreamError = (value: unknown): AgentStreamErrorInfo | undefined => {
+  if (!isObject(value) || typeof value.message !== 'string') {
+    return undefined;
+  }
+
+  const code = typeof value.code === 'string' ? value.code : undefined;
+  const ownership =
+    typeof value.ownership === 'string' && AGENT_ERROR_OWNERSHIPS.has(value.ownership as AgentErrorOwnership)
+      ? (value.ownership as AgentErrorOwnership)
+      : undefined;
+  const detail = typeof value.detail === 'string' ? value.detail : undefined;
+  const workspacePath = typeof value.workspacePath === 'string' ? value.workspacePath : undefined;
+  const retryable = typeof value.retryable === 'boolean' ? value.retryable : undefined;
+  const feedback_recommended = typeof value.feedback_recommended === 'boolean' ? value.feedback_recommended : undefined;
+  const resolution = normalizeAgentErrorResolution(value.resolution);
+
+  if (
+    !code &&
+    !ownership &&
+    !detail &&
+    !workspacePath &&
+    retryable === undefined &&
+    feedback_recommended === undefined &&
+    !resolution
+  ) {
+    return undefined;
+  }
+
+  return {
+    message: value.message,
+    ...(code ? { code } : {}),
+    ...(ownership ? { ownership } : {}),
+    ...(detail ? { detail } : {}),
+    ...(workspacePath ? { workspacePath } : {}),
+    ...(retryable !== undefined ? { retryable } : {}),
+    ...(feedback_recommended !== undefined ? { feedback_recommended } : {}),
+    ...(resolution ? { resolution } : {}),
+  };
+};
+
 /**
  * @description 将后端返回的消息转换为前端消息
  * */
-export const transformMessage = (message: IResponseMessage): TMessage => {
+export const transformMessage = (message: IResponseMessage): TMessage | undefined => {
   const created_at = message.created_at ?? Date.now();
   switch (message.type) {
     case 'error': {
       const errorData = message.data;
+      const structuredError = normalizeAgentStreamError(errorData);
       const errorText =
         typeof errorData === 'string'
           ? errorData
@@ -363,11 +501,21 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
         content: {
           content: errorText,
           type: 'error',
+          ...(structuredError ? { error: structuredError } : {}),
         },
       };
     }
     case 'tips': {
-      const data = message.data as { content: string; type?: 'error' | 'success' | 'warning' };
+      const data = message.data as {
+        content: string;
+        type?: 'error' | 'success' | 'warning';
+        error?: unknown;
+      };
+      const tipType = data.type ?? 'warning';
+      const structuredError =
+        tipType === 'error'
+          ? (normalizeAgentStreamError(data.error) ?? normalizeAgentStreamError({ ...data, message: data.content }))
+          : undefined;
       return {
         id: uuid(),
         type: 'tips',
@@ -377,7 +525,8 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
         created_at,
         content: {
           content: data.content,
-          type: data.type ?? 'warning',
+          type: tipType,
+          ...(structuredError ? { error: structuredError } : {}),
         },
       };
     }
@@ -512,7 +661,7 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
     }
     // Disabled: available_commands messages are too noisy and distracting in the chat UI
     case 'available_commands':
-      break;
+      return undefined;
     case 'start':
     case 'finish':
     case 'thought':
@@ -524,12 +673,12 @@ export const transformMessage = (message: IResponseMessage): TMessage => {
     case 'codex_model_info': // Legacy Codex model info updates
     case 'acp_context_usage': // Context usage updates, handled by AcpSendBox
     case 'request_trace': // Request trace events, logged to F12 console (not persisted)
-      break;
+      return undefined;
     default: {
       console.warn(
         `[transformMessage] Unsupported message type '${message.type}'. All non-standard message types should be pre-processed by respective AgentManagers.`
       );
-      break;
+      return undefined;
     }
   }
 };
@@ -645,28 +794,31 @@ export const composeMessage = (
     // If no existing plan found, add new one
   }
 
-  // Handle thinking message merging — append streaming content by msg_id
+  // Handle thinking message merging — only merge contiguous streaming chunks
   if (message.type === 'thinking') {
-    for (let i = list.length - 1; i >= 0; i--) {
-      const msg = list[i];
-      if (msg.type === 'thinking' && msg.msg_id === message.msg_id) {
-        // If incoming is 'done', update status and duration but keep accumulated content
-        if (message.content.status === 'done') {
-          const merged = {
-            ...msg.content,
-            status: message.content.status as 'done',
-            duration: message.content.duration,
-          };
-          return updateMessage(i, { ...msg, content: merged });
-        }
-        // Otherwise append content
+    if (message.content.status === 'done') {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const msg = list[i];
+        if (msg.type !== 'thinking' || msg.msg_id !== message.msg_id) continue;
+
         const merged = {
           ...msg.content,
-          content: msg.content.content + message.content.content,
+          status: 'done' as const,
+          duration: message.content.duration,
           subject: message.content.subject || msg.content.subject,
         };
         return updateMessage(i, { ...msg, content: merged });
       }
+    }
+
+    if (last.type === 'thinking' && last.msg_id === message.msg_id) {
+      // Otherwise append content
+      const merged = {
+        ...last.content,
+        content: last.content.content + message.content.content,
+        subject: message.content.subject || last.content.subject,
+      };
+      return updateMessage(list.length - 1, { ...last, content: merged });
     }
     return pushMessage(message);
   }

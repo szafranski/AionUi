@@ -9,7 +9,7 @@ import type { TMessage } from '@/common/chat/chatLib';
 import { transformMessage } from '@/common/chat/chatLib';
 import { uuid } from '@/common/utils';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
-import SendBox from '@/renderer/components/chat/sendbox';
+import SendBox from '@/renderer/components/chat/SendBox';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/chat/ThoughtDisplay';
 import FileAttachButton from '@/renderer/components/media/FileAttachButton';
 import FilePreview from '@/renderer/components/media/FilePreview';
@@ -26,13 +26,16 @@ import {
   useConversationCommandQueue,
   type ConversationCommandQueueItem,
 } from '@/renderer/pages/conversation/platforms/useConversationCommandQueue';
+import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
+import { getConversationRuntimeWorkspaceErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
+import { isConversationProcessing } from '@/renderer/pages/conversation/utils/conversationRuntime';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import { useTeamPermission } from '@/renderer/pages/team/hooks/TeamPermissionContext';
 import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
-import { Tag } from '@arco-design/web-react';
+import { Message, Tag } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -173,7 +176,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     // Check actual conversation status from backend before resetting aiProcessing
     // to avoid flicker when switching to a running conversation
     // 先获取后端状态再重置 aiProcessing，避免切换到运行中的会话时闪烁
-    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
+    void getConversationOrNull(conversation_id).then((res) => {
       if (cancelled) {
         return;
       }
@@ -184,7 +187,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         setHasHydratedRunningState(true);
         return;
       }
-      const isRunning = res.status === 'running';
+      const isRunning = isConversationProcessing(res);
       setAiProcessing(isRunning);
       aiProcessingRef.current = isRunning;
       setHasHydratedRunningState(true);
@@ -278,7 +281,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
   }, [conversation_id, addOrUpdateMessage]);
 
   useEffect(() => {
-    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
+    void getConversationOrNull(conversation_id).then((res) => {
       if (!res?.extra?.workspace) return;
       setWorkspacePath(res.extra.workspace);
     });
@@ -382,10 +385,11 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         if (msg_id) removeMessageByMsgId(msg_id);
         setAiProcessing(false);
         aiProcessingRef.current = false;
+        Message.error(getConversationRuntimeWorkspaceErrorMessage(error, t));
         throw error;
       }
     },
-    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, workspacePath]
+    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, t, workspacePath]
   );
 
   const {
@@ -506,10 +510,11 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
 
         emitter.emit('chat.history.refresh');
         sessionStorage.removeItem(storageKey);
-      } catch {
+      } catch (error) {
         sessionStorage.removeItem(processedKey);
         setAiProcessing(false);
         aiProcessingRef.current = false;
+        Message.error(getConversationRuntimeWorkspaceErrorMessage(error, t));
       }
     };
 

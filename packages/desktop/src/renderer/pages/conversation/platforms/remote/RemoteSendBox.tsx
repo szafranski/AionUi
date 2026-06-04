@@ -8,7 +8,7 @@ import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chat/chatLib';
 import { transformMessage } from '@/common/chat/chatLib';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
-import SendBox from '@/renderer/components/chat/sendbox';
+import SendBox from '@/renderer/components/chat/SendBox';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/chat/ThoughtDisplay';
 import FileAttachButton from '@/renderer/components/media/FileAttachButton';
 import FilePreview from '@/renderer/components/media/FilePreview';
@@ -24,12 +24,16 @@ import {
   useConversationCommandQueue,
   type ConversationCommandQueueItem,
 } from '@/renderer/pages/conversation/platforms/useConversationCommandQueue';
+import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
+import { getConversationRuntimeWorkspaceErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
+import { isConversationProcessing } from '@/renderer/pages/conversation/utils/conversationRuntime';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import { useTeamPermission } from '@/renderer/pages/team/hooks/TeamPermissionContext';
 import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
+import { Message } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -151,14 +155,14 @@ const RemoteSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id 
     hasContentInTurnRef.current = false;
     setHasHydratedRunningState(false);
 
-    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
+    void getConversationOrNull(conversation_id).then((res) => {
       if (!res) {
         setAiProcessing(false);
         aiProcessingRef.current = false;
         setHasHydratedRunningState(true);
         return;
       }
-      const isRunning = res.status === 'running';
+      const isRunning = isConversationProcessing(res);
       setAiProcessing(isRunning);
       aiProcessingRef.current = isRunning;
       setHasHydratedRunningState(true);
@@ -233,7 +237,7 @@ const RemoteSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id 
   }, [conversation_id, addOrUpdateMessage]);
 
   useEffect(() => {
-    void ipcBridge.conversation.get.invoke({ id: conversation_id }).then(async (res) => {
+    void getConversationOrNull(conversation_id).then(async (res) => {
       if (res?.extra?.workspace) setWorkspacePath(res.extra.workspace);
       const extra = res?.extra as { remoteAgentId?: string } | undefined;
       if (extra?.remoteAgentId) {
@@ -286,10 +290,11 @@ const RemoteSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id 
 
         emitter.emit('chat.history.refresh');
         sessionStorage.removeItem(storageKey);
-      } catch {
+      } catch (error) {
         sessionStorage.removeItem(processedKey);
         setAiProcessing(false);
         aiProcessingRef.current = false;
+        Message.error(getConversationRuntimeWorkspaceErrorMessage(error, t));
       }
     };
 
@@ -359,10 +364,11 @@ const RemoteSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id 
         if (msg_id) removeMessageByMsgId(msg_id);
         setAiProcessing(false);
         aiProcessingRef.current = false;
+        Message.error(getConversationRuntimeWorkspaceErrorMessage(error, t));
         throw error;
       }
     },
-    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, workspacePath]
+    [addOrUpdateMessage, checkAndUpdateTitle, conversation_id, removeMessageByMsgId, t, workspacePath]
   );
 
   const {
