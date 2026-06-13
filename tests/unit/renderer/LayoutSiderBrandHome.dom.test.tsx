@@ -118,6 +118,17 @@ describe('Layout sider brand Home button', () => {
     expect(navigate).toHaveBeenCalledWith('/conversation/abc');
   });
 
+  it('ignores non-activation keys in a settings route', () => {
+    currentPathname = '/settings/about';
+    sessionStorage.setItem('aion:last-non-settings-path', '/conversation/abc');
+    renderLayout();
+
+    const brand = screen.getByLabelText(BACK_KEY);
+    fireEvent.keyDown(brand, { key: 'Tab' });
+    fireEvent.keyDown(brand, { key: 'a' });
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('renders the wordmark as a non-actionable element in a non-settings route', () => {
     currentPathname = '/guid';
     renderLayout();
