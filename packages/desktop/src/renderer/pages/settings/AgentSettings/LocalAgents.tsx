@@ -77,13 +77,14 @@ const LocalAgents: React.FC = () => {
     [mutateAgents]
   );
 
-  const handleToggleCustomAgent = useCallback(
+  // Generic by `id`: used for both custom agents and detected ACP agents.
+  const handleToggleAgent = useCallback(
     async (agentId: string, enabled: boolean) => {
       try {
         await ipcBridge.acpConversation.setAgentEnabled.invoke({ id: agentId, enabled });
         await mutateAgents();
       } catch (err) {
-        console.error('toggle custom agent failed:', err);
+        console.error('toggle agent failed:', err);
       }
     },
     [mutateAgents]
@@ -165,6 +166,7 @@ const LocalAgents: React.FC = () => {
             type='detected'
             agent={agent}
             onGoToChat={() => goToChatWithAgent(agent)}
+            onToggle={(enabled) => void handleToggleAgent(agent.id, enabled)}
           />
         ))}
       </div>
@@ -234,7 +236,7 @@ const LocalAgents: React.FC = () => {
               setEditorVisible(true);
             }}
             onDelete={() => void handleDeleteCustomAgent(agent.id)}
-            onToggle={(enabled) => void handleToggleCustomAgent(agent.id, enabled)}
+            onToggle={(enabled) => void handleToggleAgent(agent.id, enabled)}
           />
         ))}
       </div>

@@ -19,6 +19,8 @@ type DetectedAgent = {
   custom_agent_id?: string;
   isExtension?: boolean;
   avatar?: string;
+  /** User-disabled detected agents stay listed (greyed); missing/`true` means enabled. */
+  enabled?: boolean;
 };
 
 /** Minimal custom-agent fields consumed by the 'custom' card variant. */
@@ -39,6 +41,8 @@ type AgentCardProps =
       type: 'detected';
       agent: DetectedAgent;
       onGoToChat: () => void;
+      /** Optional: when provided, render an enable/disable switch. Omitted for the always-on Aion CLI. */
+      onToggle?: (enabled: boolean) => void;
     }
   | {
       type: 'custom';
@@ -54,7 +58,8 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
   const goToChatButtonClassName = '!w-full !justify-center !rounded-10px !text-12px';
 
   if (props.type === 'detected') {
-    const { agent, onGoToChat } = props;
+    const { agent, onGoToChat, onToggle } = props;
+    const isDisabled = agent.enabled === false;
     const extensionAvatar = resolveExtensionAssetUrl(agent.isExtension ? agent.avatar : undefined);
     const logo =
       extensionAvatar ||
@@ -66,23 +71,38 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
       });
 
     return (
-      <div className='flex min-h-[154px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-12px transition-colors hover:border-[var(--color-border-3)]'>
-        <div className='mb-10px flex justify-center'>
-          <Avatar size={40} shape='square' style={{ flexShrink: 0, backgroundColor: 'transparent' }}>
-            {logo ? <img src={logo} alt={agent.name} className='h-full w-full object-contain' /> : '🤖'}
-          </Avatar>
+      <div className='relative flex min-h-[154px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-12px transition-colors hover:border-[var(--color-border-3)]'>
+        {/* Switch stays fully interactive (not greyed) so a disabled agent can be turned back on. */}
+        {onToggle && (
+          <div className='absolute right-8px top-8px'>
+            <Switch size='small' checked={agent.enabled !== false} onChange={onToggle} />
+          </div>
+        )}
+
+        <div className={isDisabled ? 'flex flex-1 flex-col opacity-50' : 'flex flex-1 flex-col'}>
+          <div className='mb-10px flex justify-center'>
+            <Avatar size={40} shape='square' style={{ flexShrink: 0, backgroundColor: 'transparent' }}>
+              {logo ? <img src={logo} alt={agent.name} className='h-full w-full object-contain' /> : '🤖'}
+            </Avatar>
+          </div>
+
+          <div className='mb-10px flex-1 text-center'>
+            <Typography.Text className='block text-13px font-medium leading-18px line-clamp-2'>
+              {agent.name}
+            </Typography.Text>
+            <Typography.Text className='mt-4px block text-11px text-t-secondary'>
+              {t('settings.agentManagement.detected')}
+            </Typography.Text>
+          </div>
         </div>
 
-        <div className='mb-10px flex-1 text-center'>
-          <Typography.Text className='block text-13px font-medium leading-18px line-clamp-2'>
-            {agent.name}
-          </Typography.Text>
-          <Typography.Text className='mt-4px block text-11px text-t-secondary'>
-            {t('settings.agentManagement.detected')}
-          </Typography.Text>
-        </div>
-
-        <Button size='small' type='secondary' onClick={onGoToChat} className={goToChatButtonClassName}>
+        <Button
+          size='small'
+          type='secondary'
+          onClick={onGoToChat}
+          disabled={isDisabled}
+          className={goToChatButtonClassName}
+        >
           {t('settings.agentManagement.goToChat')}
         </Button>
       </div>

@@ -67,3 +67,74 @@ describe('AgentCard (custom variant)', () => {
     expect(onToggle).toHaveBeenCalled();
   });
 });
+
+const renderDetected = (opts: { enabled?: boolean; withToggle?: boolean; onToggle?: (v: boolean) => void } = {}) => {
+  const { enabled, withToggle = true, onToggle } = opts;
+  return render(
+    <AgentCard
+      type='detected'
+      agent={{ agent_type: 'acp', backend: 'claude', name: 'Claude', enabled }}
+      onGoToChat={vi.fn()}
+      {...(withToggle ? { onToggle: onToggle ?? vi.fn() } : {})}
+    />
+  );
+};
+
+describe('AgentCard (detected variant)', () => {
+  it('renders a checked switch when onToggle is provided and the agent is enabled', () => {
+    const { container } = renderDetected({ enabled: true });
+
+    const toggle = container.querySelector('[role="switch"]') as HTMLElement | null;
+    expect(toggle).toBeTruthy();
+    // Arco marks a checked switch with aria-checked="true".
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('treats a missing enabled flag as enabled (checked switch)', () => {
+    const { container } = renderDetected({});
+
+    const toggle = container.querySelector('[role="switch"]') as HTMLElement | null;
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('fires onToggle when the switch is clicked', () => {
+    const onToggle = vi.fn();
+    const { container } = renderDetected({ enabled: true, onToggle });
+
+    const toggle = container.querySelector('[role="switch"]') as HTMLElement;
+    fireEvent.click(toggle);
+    expect(onToggle).toHaveBeenCalled();
+  });
+
+  it('greys the card content and disables Go-to-chat when disabled', () => {
+    const { container } = renderDetected({ enabled: false });
+
+    expect(container.querySelector('.opacity-50')).toBeTruthy();
+    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
+    expect(goToChat.disabled).toBe(true);
+  });
+
+  it('renders no switch when onToggle is absent (Aion CLI case)', () => {
+    const { container } = renderDetected({ enabled: true, withToggle: false });
+
+    expect(container.querySelector('[role="switch"]')).toBeNull();
+    // The card is still usable: Go-to-chat is enabled.
+    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
+    expect(goToChat.disabled).toBe(false);
+  });
+
+  it('falls back to the robot glyph when the agent resolves no logo', () => {
+    // An unknown backend with no icon yields a null logo → the 🤖 fallback renders.
+    const { container } = render(
+      <AgentCard
+        type='detected'
+        agent={{ agent_type: 'acp', backend: 'no-logo-vendor', name: 'Nameless' }}
+        onGoToChat={vi.fn()}
+        onToggle={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('🤖');
+  });
+});
