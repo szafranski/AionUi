@@ -64,6 +64,14 @@ describe('useManagedAgents', () => {
     expect(result.current.agents).toEqual(agents);
   });
 
+  it('falls back to an empty list when SWR has no data yet', () => {
+    (useSWR as any).mockReturnValue({ data: undefined, error: null, isLoading: true });
+
+    const { result } = renderHook(() => useManagedAgents());
+
+    expect(result.current.agents).toEqual([]);
+  });
+
   it('revalidate refreshes BOTH the management and the shared detected key', async () => {
     (useSWR as any).mockReturnValue({ data: [], error: null, isLoading: false });
 
