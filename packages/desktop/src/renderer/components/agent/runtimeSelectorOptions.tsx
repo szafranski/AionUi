@@ -5,7 +5,8 @@
  */
 
 import type { AcpConfigSetStatus, AcpDerivedOption } from '@/renderer/hooks/agent/useAcpConfigOptions';
-import { Menu } from '@arco-design/web-react';
+import { modelSummaryFromDescription, splitModelLabel } from '@/renderer/utils/model/agentLogo';
+import { Menu, Tooltip } from '@arco-design/web-react';
 import React from 'react';
 
 export const getCurrentThoughtLevelLabel = (thoughtLevel: AcpDerivedOption | null | undefined): string => {
@@ -46,6 +47,30 @@ export const RuntimeSelectorCheckedItem: React.FC<{
     <span className='min-w-0 truncate'>{children}</span>
   </div>
 );
+
+/** Render ACP model names with qualifiers and description summaries separated. */
+export const RuntimeSelectorModelLabel: React.FC<{ label: string; description?: string | null }> = ({
+  label,
+  description,
+}) => {
+  const { base, qualifier } = splitModelLabel(label);
+  const summary = modelSummaryFromDescription(description);
+  const content = (
+    <span className='flex flex-col min-w-0'>
+      <span className='inline-flex items-baseline gap-6px min-w-0'>
+        <span className='truncate'>{base}</span>
+        {qualifier && <span className='shrink-0 text-12px text-t-secondary'>{qualifier}</span>}
+      </span>
+      {summary && <span className='truncate text-12px text-t-secondary'>{summary}</span>}
+    </span>
+  );
+  if (!description) return content;
+  return (
+    <Tooltip mini position='right' content={description}>
+      {content}
+    </Tooltip>
+  );
+};
 
 export const renderThoughtLevelMenuGroup = ({
   thoughtLevel,

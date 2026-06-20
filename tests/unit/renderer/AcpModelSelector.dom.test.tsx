@@ -73,17 +73,25 @@ vi.mock('@/renderer/components/agent/MarqueePillLabel', () => ({
   default: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock('@/renderer/utils/model/agentLogo', () => ({
-  getModelDisplayLabel: ({
-    selectedLabel,
-    selected_value,
-    fallbackLabel,
-  }: {
-    selectedLabel?: string;
-    selected_value?: string | null;
-    fallbackLabel: string;
-  }) => selectedLabel || selected_value || fallbackLabel,
+vi.mock('@/renderer/utils/platform', () => ({
+  resolveBackendAssetUrl: (url: string) => url,
 }));
+
+vi.mock('@/renderer/utils/model/agentLogo', async (importActual) => {
+  const actual = await importActual<typeof import('@/renderer/utils/model/agentLogo')>();
+  return {
+    ...actual,
+    getModelDisplayLabel: ({
+      selectedLabel,
+      selected_value,
+      fallbackLabel,
+    }: {
+      selectedLabel?: string;
+      selected_value?: string | null;
+      fallbackLabel: string;
+    }) => selectedLabel || selected_value || fallbackLabel,
+  };
+});
 
 vi.mock('@icon-park/react', () => ({
   Brain: () => <span aria-hidden='true'>brain</span>,
@@ -157,7 +165,9 @@ vi.mock('@arco-design/web-react', () => {
       success: messageSuccessMock,
       error: messageErrorMock,
     },
-    Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    Tooltip: ({ children, content }: { children?: React.ReactNode; content?: React.ReactNode }) => (
+      <span data-tooltip={typeof content === 'string' ? content : ''}>{children}</span>
+    ),
   };
 });
 
@@ -192,6 +202,75 @@ describe('AcpModelSelector runtime options', () => {
 
     expect(currentModelItem?.textContent?.trim().startsWith('\u2713')).toBe(true);
     expect(otherModelItem).not.toHaveTextContent('\u2713');
+  });
+
+  it('keeps the base model name primary and demotes the qualifier to a separate badge', () => {
+    useAcpModelInfoMock.mockReturnValue(
+      makeResult({
+        model_info: {
+          current_model_id: 'default',
+          current_model_label: 'Default (recommended)',
+          available_models: [
+            { id: 'default', label: 'Default (recommended)' },
+            { id: 'sonnet', label: 'Sonnet (1M context)' },
+          ],
+        },
+      })
+    );
+
+    render(<AcpModelSelector conversation_id='conversation-1' backend='claude' />);
+
+    const modelGroup = screen.getByRole('group', { name: 'Model' });
+    // Base names survive as their own text nodes instead of being swallowed by the qualifier.
+    expect(within(modelGroup).getByText('Default')).toBeInTheDocument();
+    expect(within(modelGroup).getByText('Sonnet')).toBeInTheDocument();
+    // Qualifiers render as a distinct badge element, not merged into the base name.
+    const recommended = within(modelGroup).getByText('recommended');
+    expect(recommended).not.toHaveTextContent('Default');
+    expect(within(modelGroup).getByText('1M context')).toBeInTheDocument();
+  });
+
+  it('surfaces the resolved model as a secondary line and the full description in a tooltip', () => {
+    useAcpModelInfoMock.mockReturnValue(
+      makeResult({
+        model_info: {
+          current_model_id: 'opus',
+          current_model_label: 'Opus',
+          available_models: [
+            { id: 'default', label: 'Default (recommended)', description: 'Sonnet 4.6 · Best for everyday tasks' },
+            { id: 'opus', label: 'Opus', description: 'Opus 4.8 · Most capable for complex work' },
+          ],
+        },
+      })
+    );
+
+    render(<AcpModelSelector conversation_id='conversation-1' backend='claude' />);
+
+    const modelGroup = screen.getByRole('group', { name: 'Model' });
+    // The model a label actually resolves to is shown as its own line.
+    expect(within(modelGroup).getByText('Sonnet 4.6')).toBeInTheDocument();
+    expect(within(modelGroup).getByText('Opus 4.8')).toBeInTheDocument();
+    // The full description is wired into a hover tooltip on the option.
+    const defaultItem = within(modelGroup).getByText('Default').closest('[role="menuitem"]');
+    expect(defaultItem?.querySelector('[data-tooltip="Sonnet 4.6 · Best for everyday tasks"]')).toBeTruthy();
+  });
+
+  it('omits the secondary line and tooltip when the backend sends no description', () => {
+    useAcpModelInfoMock.mockReturnValue(
+      makeResult({
+        model_info: {
+          current_model_id: 'opus',
+          current_model_label: 'Opus',
+          available_models: [{ id: 'opus', label: 'Opus' }],
+        },
+      })
+    );
+
+    render(<AcpModelSelector conversation_id='conversation-1' backend='claude' />);
+
+    const modelGroup = screen.getByRole('group', { name: 'Model' });
+    const opusItem = within(modelGroup).getByText('Opus').closest('[role="menuitem"]');
+    expect(opusItem?.querySelector('[data-tooltip]')).toBeNull();
   });
 
   it('omits the thought level label and group when the runtime has no thought option', () => {

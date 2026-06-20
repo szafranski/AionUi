@@ -12,6 +12,8 @@ import {
   resolveAgentLogo,
   isDefaultModel,
   getModelDisplayLabel,
+  splitModelLabel,
+  modelSummaryFromDescription,
 } from '@/renderer/utils/model/agentLogo';
 
 const bridgeMocks = vi.hoisted(() => ({
@@ -237,6 +239,68 @@ describe('agentLogo', () => {
         fallbackLabel: 'Fallback',
       });
       expect(result).toBe('Fallback');
+    });
+  });
+
+  describe('splitModelLabel', () => {
+    it('splits a trailing parenthetical into a separate qualifier', () => {
+      expect(splitModelLabel('Sonnet (1M context)')).toEqual({ base: 'Sonnet', qualifier: '1M context' });
+    });
+
+    it('promotes the base name out of a recommended/default mode label', () => {
+      expect(splitModelLabel('Default (recommended)')).toEqual({ base: 'Default', qualifier: 'recommended' });
+    });
+
+    it('keeps a versioned model name intact when there is no parenthetical', () => {
+      expect(splitModelLabel('Opus 4.8')).toEqual({ base: 'Opus 4.8', qualifier: null });
+    });
+
+    it('keeps the whole label as base when it is only a parenthetical', () => {
+      expect(splitModelLabel('(experimental)')).toEqual({ base: '(experimental)', qualifier: null });
+    });
+
+    it('treats an empty parenthetical as no qualifier', () => {
+      expect(splitModelLabel('Haiku ()')).toEqual({ base: 'Haiku', qualifier: null });
+    });
+
+    it('trims surrounding whitespace from base and qualifier', () => {
+      expect(splitModelLabel('  Opus  ( fast )  ')).toEqual({ base: 'Opus', qualifier: 'fast' });
+    });
+
+    it('returns an empty base for null input', () => {
+      expect(splitModelLabel(null)).toEqual({ base: '', qualifier: null });
+    });
+
+    it('returns an empty base for undefined input', () => {
+      expect(splitModelLabel(undefined)).toEqual({ base: '', qualifier: null });
+    });
+  });
+
+  describe('modelSummaryFromDescription', () => {
+    it('returns the first dot-separated segment as the resolved model summary', () => {
+      expect(modelSummaryFromDescription('Opus 4.8 · Most capable for complex work · ~2× usage vs Sonnet')).toBe(
+        'Opus 4.8'
+      );
+    });
+
+    it('reveals the model a mode actually resolves to', () => {
+      expect(modelSummaryFromDescription('Sonnet 4.6 · Best for everyday tasks')).toBe('Sonnet 4.6');
+    });
+
+    it('returns the whole description when there is no separator', () => {
+      expect(modelSummaryFromDescription('claude-opus-4-8')).toBe('claude-opus-4-8');
+    });
+
+    it('returns null for an empty description', () => {
+      expect(modelSummaryFromDescription('')).toBeNull();
+    });
+
+    it('returns null for null input', () => {
+      expect(modelSummaryFromDescription(null)).toBeNull();
+    });
+
+    it('returns null for undefined input', () => {
+      expect(modelSummaryFromDescription(undefined)).toBeNull();
     });
   });
 });

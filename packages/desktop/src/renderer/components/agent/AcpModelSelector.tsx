@@ -20,6 +20,7 @@ import {
   isConfigSetting,
   RuntimeSelectorCheckedItem,
   RuntimeSelectorMenuDivider,
+  RuntimeSelectorModelLabel,
   renderThoughtLevelMenuGroup,
 } from './runtimeSelectorOptions';
 
@@ -144,7 +145,7 @@ const AcpModelSelector: React.FC<{
                 }}
               >
                 <RuntimeSelectorCheckedItem selected={model.id === model_info.current_model_id}>
-                  {model.label || model.id}
+                  <RuntimeSelectorModelLabel label={model.label || model.id} description={model.description} />
                 </RuntimeSelectorCheckedItem>
               </Menu.Item>
             ))}

@@ -162,6 +162,33 @@ export const isDefaultModel = (value?: string | null, label?: string | null): bo
 };
 
 /**
+ * Split a model label into its base name and an optional trailing qualifier.
+ * 将模型标签拆分为基础名称和可选的尾部限定词
+ */
+export const splitModelLabel = (label?: string | null): { base: string; qualifier: string | null } => {
+  const trimmed = (label || '').trim();
+  const match = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(trimmed);
+  if (!match) return { base: trimmed, qualifier: null };
+  const base = match[1].trim();
+  // Without a base name there is nothing to promote (e.g. "(experimental)" alone),
+  // so keep the original label intact rather than surfacing an empty primary.
+  if (!base) return { base: trimmed, qualifier: null };
+  const qualifier = match[2].trim();
+  return { base, qualifier: qualifier || null };
+};
+
+/**
+ * Extract a short, at-a-glance model summary from an ACP option description.
+ * 从 ACP 选项的 description 中提取简短的模型摘要
+ */
+export const modelSummaryFromDescription = (description?: string | null): string | null => {
+  const trimmed = (description || '').trim();
+  if (!trimmed) return null;
+  const summary = trimmed.split('·')[0].trim();
+  return summary || null;
+};
+
+/**
  * Get display label for a model, with fallback handling
  * 获取模型的显示标签，带回退处理
  */

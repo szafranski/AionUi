@@ -246,7 +246,7 @@ export interface AcpModelInfo {
   /** Display label for the current model */
   current_model_label: string | null;
   /** Available models for switching */
-  available_models: Array<{ id: string; label: string }>;
+  available_models: Array<{ id: string; label: string; description?: string | null }>;
 }
 
 // ===== Permission request (session/request_permission) =====
