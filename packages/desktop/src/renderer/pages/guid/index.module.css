@@ -434,6 +434,14 @@
   animation: agentSelectPop 0.4s ease-out forwards;
 }
 
+/* 首页 Agent 选择条：暗色下未选中标签叠加 opacity 后对比度过低，看起来像禁用 (#3429)
+   仅在暗色去除半透明并提亮文字色（仍弱于选中态的白色加粗 + 药丸底，保持层级）
+   color 用 !important 以覆盖「More」按钮的 !text-t-secondary 工具类 */
+:global([data-theme='dark']) .assistantSelectorInactive {
+  opacity: 1;
+  color: var(--aou-9) !important;
+}
+
 /* 底部快捷按钮：基础间距 + 安全区 */
 .guidQuickActions {
   bottom: calc(32px + env(safe-area-inset-bottom, 0px));
