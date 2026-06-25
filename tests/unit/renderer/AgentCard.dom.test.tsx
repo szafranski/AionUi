@@ -3,9 +3,10 @@
  * Copyright 2025 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
  *
- * Unit tests for the 'custom' variant of AgentCard — specifically the
- * disabled-agent treatment introduced so that toggling a custom agent off
- * keeps its card visible (greyed) in settings instead of removing it.
+ * Unit tests for AgentCard — the assistant-style row used on the Agent
+ * settings page. Covers the disabled-agent treatment (a toggled-off custom
+ * agent stays visible but greyed), the status tags, and the per-row
+ * test-connection / edit actions shared by official and custom agents.
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -26,35 +27,49 @@ const baseAgent = {
   args: ['--remote'],
 };
 
-const renderCustom = (enabled: boolean, handlers: Partial<{ onToggle: (v: boolean) => void }> = {}) =>
+const renderCustom = (
+  enabled: boolean,
+  handlers: Partial<{ onToggle: (v: boolean) => void; onTestConnection: () => void; onConfigure: () => void }> = {}
+) =>
   render(
     <AgentCard
       type='custom'
-      agent={{ ...baseAgent, enabled }}
-      onGoToChat={vi.fn()}
+      agent={{ ...baseAgent, enabled, agent_type: 'acp', agent_source: 'custom', installed: true, status: 'online' }}
+      boundAssistants={[]}
       onEdit={vi.fn()}
       onDelete={vi.fn()}
       onToggle={handlers.onToggle ?? vi.fn()}
+      onTestConnection={handlers.onTestConnection ?? vi.fn()}
+      onConfigure={handlers.onConfigure ?? vi.fn()}
     />
   );
 
 describe('AgentCard (custom variant)', () => {
-  it('greys the identity block and disables Go-to-chat when the agent is disabled', () => {
+  it('greys the identity block and keeps the test-connection action available when the agent is disabled', () => {
     const { container } = renderCustom(false);
 
     // Disabled => identity block carries the opacity treatment.
     expect(container.querySelector('.opacity-50')).toBeTruthy();
-    // Start-chat is blocked while disabled.
-    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
-    expect(goToChat.disabled).toBe(true);
+    const testConnection = screen
+      .getByText('settings.agentManagement.testConnection')
+      .closest('button') as HTMLButtonElement;
+    expect(testConnection.disabled).toBe(false);
   });
 
-  it('renders at full opacity with Go-to-chat enabled when the agent is enabled', () => {
+  it('renders at full opacity with both test-connection and edit actions when enabled', () => {
     const { container } = renderCustom(true);
 
     expect(container.querySelector('.opacity-50')).toBeNull();
-    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
-    expect(goToChat.disabled).toBe(false);
+    expect(screen.getByText('settings.agentManagement.testConnection')).toBeTruthy();
+    expect(screen.getByText('common.edit')).toBeTruthy();
+  });
+
+  it('fires onTestConnection when the test-connection button is clicked', () => {
+    const onTestConnection = vi.fn();
+    renderCustom(true, { onTestConnection });
+
+    fireEvent.click(screen.getByText('settings.agentManagement.testConnection'));
+    expect(onTestConnection).toHaveBeenCalled();
   });
 
   it('fires onToggle when the switch is clicked', () => {
@@ -68,73 +83,173 @@ describe('AgentCard (custom variant)', () => {
   });
 });
 
-const renderDetected = (opts: { enabled?: boolean; withToggle?: boolean; onToggle?: (v: boolean) => void } = {}) => {
-  const { enabled, withToggle = true, onToggle } = opts;
-  return render(
+const renderOfficial = (
+  agent: Record<string, unknown>,
+  handlers: Partial<{ onToggle: (v: boolean) => void; onTestConnection: () => void; onConfigure: () => void }> = {}
+) =>
+  render(
     <AgentCard
-      type='detected'
-      agent={{ agent_type: 'acp', backend: 'claude', name: 'Claude', enabled }}
-      onGoToChat={vi.fn()}
-      {...(withToggle ? { onToggle: onToggle ?? vi.fn() } : {})}
+      type='official'
+      agent={agent as never}
+      boundAssistants={[]}
+      onTestConnection={handlers.onTestConnection ?? vi.fn()}
+      onConfigure={handlers.onConfigure ?? vi.fn()}
+      onToggle={handlers.onToggle}
     />
   );
-};
 
-describe('AgentCard (detected variant)', () => {
-  it('renders a checked switch when onToggle is provided and the agent is enabled', () => {
-    const { container } = renderDetected({ enabled: true });
+describe('AgentCard (official variant)', () => {
+  it('shows status tag plus test-connection and edit actions for a missing official agent', () => {
+    renderOfficial({
+      id: 'claude',
+      name: 'Claude Code',
+      agent_type: 'acp',
+      agent_source: 'builtin',
+      backend: 'claude',
+      enabled: true,
+      installed: false,
+      status: 'missing',
+      last_check_error_code: 'command_not_found',
+      last_check_error_details: { command: 'claude' },
+      last_check_error_message: 'CLI command not found',
+    });
 
-    const toggle = container.querySelector('[role="switch"]') as HTMLElement | null;
-    expect(toggle).toBeTruthy();
-    // Arco marks a checked switch with aria-checked="true".
-    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByText('settings.agentManagement.statusMissing')).toBeInTheDocument();
+    // F2-02: test-connection stays available in every state, including missing.
+    expect(screen.getByText('settings.agentManagement.testConnection')).toBeInTheDocument();
+    expect(screen.getByText('common.edit')).toBeInTheDocument();
   });
 
-  it('treats a missing enabled flag as enabled (checked switch)', () => {
-    const { container } = renderDetected({});
+  it('shows the needs-sign-in status when an offline agent reports auth_required', () => {
+    renderOfficial({
+      id: 'kimi',
+      name: 'Kimi',
+      agent_type: 'acp',
+      agent_source: 'builtin',
+      backend: 'kimi',
+      enabled: true,
+      installed: true,
+      status: 'offline',
+      last_check_error_code: 'auth_required',
+    });
 
-    const toggle = container.querySelector('[role="switch"]') as HTMLElement | null;
-    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+    // auth_required is split out of the generic offline label.
+    expect(screen.getByText('settings.agentManagement.statusNeedsAuth')).toBeInTheDocument();
+    expect(screen.queryByText('settings.agentManagement.statusOffline')).toBeNull();
   });
 
-  it('fires onToggle when the switch is clicked', () => {
+  it('shows the generic unavailable status for a non-auth offline agent', () => {
+    renderOfficial({
+      id: 'droid',
+      name: 'Droid',
+      agent_type: 'acp',
+      agent_source: 'builtin',
+      backend: 'droid',
+      enabled: true,
+      installed: true,
+      status: 'offline',
+      last_check_error_code: 'acp_init_failed',
+    });
+
+    expect(screen.getByText('settings.agentManagement.statusOffline')).toBeInTheDocument();
+    expect(screen.queryByText('settings.agentManagement.statusNeedsAuth')).toBeNull();
+  });
+
+  it('fires onTestConnection when an online official agent is tested', () => {
+    const onTestConnection = vi.fn();
+    renderOfficial(
+      {
+        id: 'gemini',
+        name: 'Gemini CLI',
+        agent_type: 'acp',
+        agent_source: 'builtin',
+        backend: 'gemini',
+        enabled: true,
+        installed: true,
+        status: 'online',
+      },
+      { onTestConnection }
+    );
+
+    fireEvent.click(screen.getByText('settings.agentManagement.testConnection'));
+    expect(onTestConnection).toHaveBeenCalled();
+  });
+
+  it('fires onConfigure when the edit action is clicked', () => {
+    const onConfigure = vi.fn();
+    renderOfficial(
+      {
+        id: 'gemini',
+        name: 'Gemini CLI',
+        agent_type: 'acp',
+        agent_source: 'builtin',
+        backend: 'gemini',
+        enabled: true,
+        installed: true,
+        status: 'online',
+      },
+      { onConfigure }
+    );
+
+    fireEvent.click(screen.getByText('common.edit'));
+    expect(onConfigure).toHaveBeenCalled();
+  });
+
+  it('renders a checked switch and fires onToggle when an official agent can be disabled', () => {
     const onToggle = vi.fn();
-    const { container } = renderDetected({ enabled: true, onToggle });
+    const { container } = renderOfficial(
+      {
+        id: 'claude',
+        name: 'Claude Code',
+        agent_type: 'acp',
+        agent_source: 'builtin',
+        backend: 'claude',
+        enabled: true,
+        installed: true,
+        status: 'online',
+      },
+      { onToggle }
+    );
 
     const toggle = container.querySelector('[role="switch"]') as HTMLElement;
+    expect(toggle).toBeTruthy();
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
     fireEvent.click(toggle);
     expect(onToggle).toHaveBeenCalled();
   });
 
-  it('greys the card content and disables Go-to-chat when disabled', () => {
-    const { container } = renderDetected({ enabled: false });
-
-    expect(container.querySelector('.opacity-50')).toBeTruthy();
-    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
-    expect(goToChat.disabled).toBe(true);
-  });
-
-  it('renders no switch when onToggle is absent (Aion CLI case)', () => {
-    const { container } = renderDetected({ enabled: true, withToggle: false });
-
-    expect(container.querySelector('[role="switch"]')).toBeNull();
-    // The card is still usable: Go-to-chat is enabled.
-    const goToChat = screen.getByText('settings.agentManagement.goToChat').closest('button') as HTMLButtonElement;
-    expect(goToChat.disabled).toBe(false);
-  });
-
-  it('falls back to the robot glyph when the agent resolves no logo', () => {
-    // An unknown backend with no icon yields a null logo → the 🤖 fallback renders.
-    const { container } = render(
-      <AgentCard
-        type='detected'
-        agent={{ agent_type: 'acp', backend: 'no-logo-vendor', name: 'Nameless' }}
-        onGoToChat={vi.fn()}
-        onToggle={vi.fn()}
-      />
+  it('greys a disabled official agent only when a toggle handler is present', () => {
+    const { container } = renderOfficial(
+      {
+        id: 'claude',
+        name: 'Claude Code',
+        agent_type: 'acp',
+        agent_source: 'builtin',
+        backend: 'claude',
+        enabled: false,
+        installed: true,
+        status: 'online',
+      },
+      { onToggle: vi.fn() }
     );
 
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.textContent).toContain('🤖');
+    expect(container.querySelector('.opacity-50')).toBeTruthy();
+    expect(screen.getByText('settings.agentManagement.testConnection')).toBeInTheDocument();
+  });
+
+  it('renders no switch for official agents without a toggle handler', () => {
+    const { container } = renderOfficial({
+      id: 'aionrs',
+      name: 'Aion CLI',
+      agent_type: 'aionrs',
+      agent_source: 'internal',
+      backend: 'aionrs',
+      enabled: true,
+      installed: true,
+      status: 'online',
+    });
+
+    expect(container.querySelector('[role="switch"]')).toBeNull();
   });
 });

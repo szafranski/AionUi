@@ -7,6 +7,7 @@
 import type { IConversationArtifact } from '@/common/adapter/ipcBridge';
 import type { IMessageAcpToolCall, IMessageToolCall, IMessageToolGroup, TMessage } from '@/common/chat/chatLib';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
+import { useConversationRuntimeView } from '@/renderer/pages/conversation/runtime/useConversationRuntimeView';
 import { iconColors } from '@/renderer/styles/colors';
 import { CHAT_MESSAGE_JUMP_EVENT, type ChatMessageJumpDetail } from '@/renderer/utils/chat/chatMinimapEvents';
 import { Image } from '@arco-design/web-react';
@@ -15,7 +16,7 @@ import MessageAcpPermission from '@renderer/pages/conversation/Messages/acp/Mess
 import MessagePermission from './components/MessagePermission';
 import MessageAcpToolCall from '@renderer/pages/conversation/Messages/acp/MessageAcpToolCall';
 import classNames from 'classnames';
-import React, { createContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { uuid } from '@renderer/utils/common';
@@ -24,7 +25,13 @@ import HOC from '@renderer/utils/ui/HOC';
 import type { FileChangeInfo } from './MessageFileChanges';
 import MessageFileChanges, { parseDiff } from './MessageFileChanges';
 import { useConversationArtifacts } from './artifacts';
-import { useMessageList, useMessageListLoading } from './hooks';
+import {
+  useLoadAnchorMessageWindow,
+  useLoadPreviousMessagePage,
+  useMessageList,
+  useMessageListLoading,
+  useMessagePaginationState,
+} from './hooks';
 import MessageAgentStatus from './components/MessageAgentStatus';
 import MessagePlan from './components/MessagePlan';
 import MessageTips from './components/MessageTips';
@@ -234,15 +241,25 @@ const MessageItem: React.FC<{ message: TMessage; highlighted?: boolean; showCopy
 const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }> = ({ emptySlot }) => {
   const list = useMessageList();
   const isMessageListLoading = useMessageListLoading();
+  const pagination = useMessagePaginationState();
   const artifacts = useConversationArtifacts();
   const conversationContext = useConversationContextSafe();
+  const loadPreviousMessagePage = useLoadPreviousMessagePage(conversationContext?.conversation_id);
+  const loadAnchorMessageWindow = useLoadAnchorMessageWindow(conversationContext?.conversation_id);
   useAutoPreviewOfficeFiles(conversationContext);
+  // While the agent is still streaming, the in-progress turn's last text keeps
+  // moving down, so we defer its copy/timestamp row until the turn finishes to
+  // avoid the row flashing in and the layout reflowing mid-stream.
+  const { isProcessing } = useConversationRuntimeView(conversationContext?.conversation_id ?? '');
   const { t } = useTranslation();
   const location = useLocation();
   const locationState = (location.state || {}) as ConversationLocationState;
   const targetMessageId = locationState.targetMessageId;
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | undefined>();
   const handledTargetKeyRef = useRef<string>('');
+  const loadingTargetKeyRef = useRef<string>('');
+  const scrollerElementRef = useRef<HTMLDivElement | null>(null);
+  const contentElementRef = useRef<HTMLDivElement | null>(null);
 
   // Pre-process message list to group tool outputs into summary cards
   const processedList = useMemo(() => {
@@ -351,10 +368,13 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
   // Collect the id of the last AI text in each turn; a turn runs until the next
   // user (right) message. Tool/file/artifact items don't end a turn and, per the
   // fallback strategy, the row stays on the turn's last text even when followed
-  // by tool blocks.
+  // by tool blocks. While the conversation is still streaming, the final turn's
+  // row is withheld (it would otherwise appear then shift down as more text
+  // streams in); earlier, already-finished turns always keep their row.
   const aiCopyRowTextIds = useMemo(() => {
     const ids = new Set<string>();
     let pendingTextId: string | undefined;
+    let lastTurnTextId: string | undefined;
     const flush = () => {
       if (pendingTextId) ids.add(pendingTextId);
       pendingTextId = undefined;
@@ -375,9 +395,12 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
         pendingTextId = message.id;
       }
     }
+    lastTurnTextId = pendingTextId;
     flush();
+    // The final turn is the one that may still be streaming; hide its row until done.
+    if (isProcessing && lastTurnTextId) ids.delete(lastTurnTextId);
     return ids;
-  }, [processedList]);
+  }, [processedList, isProcessing]);
 
   // Use auto-scroll hook
   const {
@@ -395,6 +418,42 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
     itemCount: processedList.length,
   });
 
+  const setScrollerRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      scrollerElementRef.current = element;
+      handleScrollerRef(element);
+    },
+    [handleScrollerRef]
+  );
+
+  const setContentRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      contentElementRef.current = element;
+      handleContentRef(element);
+    },
+    [handleContentRef]
+  );
+
+  const handleMessageListScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      handleScroll(event);
+      const scroller = event.currentTarget;
+      if (!pagination.hasMoreBefore || pagination.isLoadingBefore || scroller.scrollTop > 160) {
+        return;
+      }
+
+      const previousHeight = contentElementRef.current?.scrollHeight ?? 0;
+      void loadPreviousMessagePage().then((loaded) => {
+        if (!loaded) return;
+        requestAnimationFrame(() => {
+          const nextHeight = contentElementRef.current?.scrollHeight ?? previousHeight;
+          scroller.scrollTop += nextHeight - previousHeight;
+        });
+      });
+    },
+    [handleScroll, loadPreviousMessagePage, pagination.hasMoreBefore, pagination.isLoadingBefore]
+  );
+
   useEffect(() => {
     if (!targetMessageId || processedList.length === 0) {
       return;
@@ -407,10 +466,19 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
 
     const targetIndex = processedList.findIndex((item) => matchesTargetMessage(item, targetMessageId));
     if (targetIndex === -1) {
+      if (loadingTargetKeyRef.current !== targetKey) {
+        loadingTargetKeyRef.current = targetKey;
+        void loadAnchorMessageWindow(targetMessageId).then((loaded) => {
+          if (!loaded) {
+            loadingTargetKeyRef.current = '';
+          }
+        });
+      }
       return;
     }
 
     handledTargetKeyRef.current = targetKey;
+    loadingTargetKeyRef.current = '';
     setHighlightedMessageId(targetMessageId);
     hideScrollButton();
 
@@ -427,7 +495,7 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
     }, 2400);
 
     return () => window.clearTimeout(timer);
-  }, [hideScrollButton, location.key, processedList, scrollElementIntoView, targetMessageId]);
+  }, [hideScrollButton, loadAnchorMessageWindow, location.key, processedList, scrollElementIntoView, targetMessageId]);
 
   useEffect(() => {
     const handleMessageJump = (event: Event) => {
@@ -449,7 +517,24 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
         if (detail.msgId && message.msg_id === detail.msgId) return true;
         return false;
       });
-      if (targetIndex < 0) return;
+      if (targetIndex < 0) {
+        const anchorMessageId = detail.messageId;
+        if (!anchorMessageId) return;
+        void loadAnchorMessageWindow(anchorMessageId).then((loaded) => {
+          if (!loaded) return;
+          setHighlightedMessageId(anchorMessageId);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const targetElement = document.getElementById(`message-${anchorMessageId}`);
+              scrollElementIntoView(targetElement, {
+                block: detail.align || 'start',
+                behavior: detail.behavior || 'smooth',
+              });
+            });
+          });
+        });
+        return;
+      }
 
       hideScrollButton();
       requestAnimationFrame(() => {
@@ -467,7 +552,13 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
     return () => {
       window.removeEventListener(CHAT_MESSAGE_JUMP_EVENT, handleMessageJump);
     };
-  }, [conversationContext?.conversation_id, hideScrollButton, processedList, scrollElementIntoView]);
+  }, [
+    conversationContext?.conversation_id,
+    hideScrollButton,
+    loadAnchorMessageWindow,
+    processedList,
+    scrollElementIntoView,
+  ]);
 
   // Click scroll button
   const handleScrollButtonClick = () => {
@@ -530,17 +621,17 @@ const MessageList: React.FC<{ className?: string; emptySlot?: React.ReactNode }>
       <Image.PreviewGroup actionsLayout={['zoomIn', 'zoomOut', 'originalSize', 'rotateLeft', 'rotateRight']}>
         <ImagePreviewContext.Provider value={{ inPreviewGroup: true }}>
           <div
-            ref={handleScrollerRef}
+            ref={setScrollerRef}
             data-testid='message-list-scroller'
             // Break out of the parent's 20px horizontal padding so the scrollbar hugs the
             // window edge, while re-applying that padding inside to keep message content inset.
             className='flex-1 h-full overflow-y-auto pb-10px box-border -mx-20px px-20px'
             style={{ overflowAnchor: 'none' }}
             onPointerDown={handlePointerDown}
-            onScroll={handleScroll}
+            onScroll={handleMessageListScroll}
             onWheel={handleWheel}
           >
-            <div ref={handleContentRef} data-testid='message-list-content' style={{ overflowAnchor: 'none' }}>
+            <div ref={setContentRef} data-testid='message-list-content' style={{ overflowAnchor: 'none' }}>
               <div className='h-10px' />
               {processedList.map((item, index) => (
                 <React.Fragment key={getProcessedItemAnchorId(item) || index}>{renderItem(index, item)}</React.Fragment>
